@@ -6,7 +6,8 @@ Bedienelemente für PyQt6, die sich nach außen wie ihre Qt-Vorbilder verhalten.
 | --- | --- | --- |
 | `GlowButton` | `QPushButton` | Zeigt an, dass eine Aufgabe läuft: Beschriftung blendet über, Rahmen leuchtet in wandernden Regenbogenfarben |
 | `FrameButton` | `QPushButton` | Gibt unter der Maus seinen Schleier ab und fängt dafür einen feinen Rahmen ein, der von außen hereinfährt |
-| `AnimatedToggle` | `QCheckBox` | Schiebeschalter mit gleitendem Knopf und Puls beim Umschalten |
+| `AnimatedToggle` | `QCheckBox` | Schiebeschalter mit gleitendem Knopf |
+| `HeartCheckBox` | `QCheckBox` | Herz zum Anhaken: es füllt sich mit einem Hüpfer, sechs Funken stieben weg |
 | `StatusBar` | `QLabel` in einer Statuszeile | Klappt lange Meldungen kurz auf, ohne das Fenster zu verschieben |
 | `ReferenceThumb` | — | Bild-Miniatur zum Anklicken, lädt die Datei zu ImgBB hoch und zeigt den Fortschritt |
 | `PromptEditor` | `QTextEdit` | Hebt Abschnittsüberschriften im Text hervor |
@@ -17,6 +18,21 @@ Hell- wie im Dunkelmodus richtig aus.
 
 Abhängigkeiten: PyQt6, dazu `requests` — das braucht nur der ImgBB-Upload von
 `ReferenceThumb`.
+
+## Aufbau
+
+Knöpfe und Kästchen liegen in eigenen Ordnern, weil es von beiden mehrere gibt:
+
+```
+qt_controls_pyrs/
+    buttons/      GlowButton, FrameButton
+    checkboxes/   AnimatedToggle, HeartCheckBox
+    statusbar.py, referencethumb.py, imgbb.py, prompt_editor.py, flashtaskbar.py
+```
+
+Importiert wird weiterhin aus dem Paket selbst — `from qt_controls_pyrs import
+GlowButton` —, die Ordner sind also nur innen sichtbar. Wer mag, greift auch
+direkt zu: `from qt_controls_pyrs.buttons import GlowButton`.
 
 ## Installation
 
@@ -35,7 +51,9 @@ also braucht die `.spec` keine Zusatzeinträge.
 python examples/demo.py
 ```
 
-Zeigt Schalter, beide Knöpfe und die Statuszeile in einem Fenster, im Dunkelmodus.
+Zeigt Schalter, Herz, beide Knöpfe, die Bild-Miniatur und die Statuszeile in
+einem Fenster, im Dunkelmodus. Mit gesetztem `IMGBB_API_KEY` lädt die Miniatur
+auch wirklich hoch, sonst bleibt es bei der Vorschau.
 
 ## GlowButton
 
@@ -123,15 +141,55 @@ toggle.toggled.connect(speichern)
 
 Eine `QCheckBox` mit eigenem Aussehen: `isChecked()`, `setChecked()` und das
 `toggled`-Signal funktionieren unverändert. Der Knopf gleitet in 200 ms
-herüber, danach läuft ein kurzer Puls-Ring nach außen. Die Beschriftung wird
-mitgezeichnet, ein Klick darauf schaltet ebenfalls um.
+herüber. Die Beschriftung wird mitgezeichnet, ein Klick darauf schaltet
+ebenfalls um.
 
-Einstellbar: `TRACK_W`, `TRACK_H`, `GAP`, `SLIDE_MS`, `PULSE_MS`.
+Einstellbar: `TRACK_W`, `TRACK_H`, `GAP`, `SLIDE_MS`.
 
 Grundlage ist `AnimatedToggle` aus dem Paket
 [qtwidgets](http://github.com/learnpyqt/python-qtwidgets) von Martin Fitzpatrick
 (MIT). Diese Fassung ist nach PyQt6 portiert, zeichnet zusätzlich die
-Beschriftung und nimmt die Farben aus der Palette.
+Beschriftung und nimmt die Farben aus der Palette. Den Puls-Ring der Vorlage
+gibt es hier nicht mehr.
+
+## HeartCheckBox
+
+```python
+from qt_controls_pyrs import HeartCheckBox
+
+heart = HeartCheckBox("Gefällt mir")
+heart.setToolTip("Like")
+heart.toggled.connect(merken)
+```
+
+Nachbau des Musters [heart-container](https://uiverse.io) von Uiverse.io
+(catraco). Im Ruhezustand steht nur der Umriss da. Angehakt fährt das volle Herz
+in einem Sprung heraus — erst auf 1.2, dann zurück auf 1 — und leuchtet dabei
+kurz auf, während sechs Striche nach außen stieben und verblassen. Abgehakt ist
+das volle Herz sofort weg; die Vorlage blendet dort ebenfalls nicht aus, sondern
+schaltet mit `display: none` hart um.
+
+Nach außen bleibt es eine `QCheckBox`: `isChecked()`, `setChecked()` und das
+`toggled`-Signal funktionieren unverändert. Die Beschriftung wird mitgezeichnet,
+ein Klick darauf hakt ebenfalls an.
+
+Die beiden Herzen sind die Originalpfade der Vorlage, gezeichnet über
+`QSvgRenderer` — das Herz bleibt dadurch in jeder Größe scharf. Es füllt die
+Höhe des Widgets: ein kleineres Kästchen bekommt ein kleineres Herz, samt
+Funken. Die Funken der Vorlage fliegen weiter hinaus, als in Qt Platz ist (ein
+Widget zeichnet nicht über seinen Rand hinaus), deshalb hält das Kästchen
+`SPARK_ROOM` Pixel Rand frei und die Funken rücken so weit zusammen, dass sie
+am Ende gerade noch hineinpassen.
+
+Die Herzfarbe ist `--heart-color` der Vorlage und zur Laufzeit austauschbar:
+
+```python
+heart.setHeartColor("#44cc88")
+```
+
+Einstellbar über Klassenkonstanten: `HEART` (Kantenlänge), `SPARK_ROOM`,
+`SPARK_END` (wie weit die Funken wachsen), `GAP`, `POP_MS`, `SPARK_MS`,
+`COLOR` und `SPARKS` (die sechs Striche).
 
 ## StatusBar
 

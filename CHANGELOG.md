@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- `HeartCheckBox` aufgenommen: Herz zum Anhaken nach dem Muster
+  "heart-container" von Uiverse.io. Das volle Herz springt beim Anhaken heraus
+  und leuchtet kurz auf, sechs Funken stieben weg; abgehakt ist es sofort weg.
+  Die Herzen sind die Originalpfade der Vorlage (`QSvgRenderer`), die Farbe ist
+  über `setHeartColor()` austauschbar. Das Herz geht mit der Widget-Größe mit.
+- Knöpfe und Kästchen liegen jetzt in den Unterpaketen `buttons` und
+  `checkboxes`. Die Importe aus `qt_controls_pyrs` bleiben unverändert; wer
+  bisher `qt_controls_pyrs.glowbutton` oder `.toggleswitch` direkt importiert
+  hat, schreibt nun `qt_controls_pyrs.buttons.glowbutton` beziehungsweise
+  `qt_controls_pyrs.checkboxes.toggleswitch`.
+- `AnimatedToggle`: den Puls-Ring beim Umschalten gibt es nicht mehr, samt
+  `PULSE_MS` und der Eigenschaft `pulse_radius`. Der Knopf gleitet nur noch.
+- Die Demo zeigt jetzt auch `ReferenceThumb` und `HeartCheckBox`.
 - `FrameButton` aufgenommen: Knopf nach dem CSS-Muster `.btn-three`. Unter der
   Maus schrumpft der Schleier über der Fläche zur Mitte und verblasst, während
   ein feiner Rahmen von außen hereinfährt; die Fläche hellt dabei langsamer auf.

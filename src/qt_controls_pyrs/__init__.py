@@ -8,6 +8,8 @@ Eigenständige Widgets und Helfer, die sich wie ihre Qt-Vorbilder verhalten:
 * :class:`FrameButton` – Knopf, der unter der Maus seinen Schleier abgibt und
   einen feinen Rahmen von außen hereinfahren lässt.
 * :class:`AnimatedToggle` – Schiebeschalter als Ersatz für ``QCheckBox``.
+* :class:`HeartCheckBox` – Herz zum Anhaken, das sich mit einem Hüpfer
+  füllt und Funken wegstieben lässt.
 * :class:`StatusBar` – Statuszeile, die lange Meldungen kurz aufklappt, ohne
   die Fensteraufteilung zu verändern.
 * :class:`ReferenceThumb` – Bild-Miniatur zum Anklicken, die die gewählte Datei
@@ -16,9 +18,9 @@ Eigenständige Widgets und Helfer, die sich wie ihre Qt-Vorbilder verhalten:
 * :func:`flash_taskbar` – lässt den Taskleisten-Eintrag blinken (Windows).
 """
 
+from .buttons import FrameButton, GenerateButton, GlowButton
+from .checkboxes import AnimatedToggle, HeartCheckBox
 from .flashtaskbar import flash_taskbar, stop_flashing
-from .framebutton import FrameButton
-from .glowbutton import GenerateButton, GlowButton
 from .imgbb import (
     ImgBBApiError, ImgBBClient, ImgBBError, ImgBBFileNotFoundError,
     ImgBBNetworkError, ImgBBUploadWorker, UploadResult
@@ -26,7 +28,6 @@ from .imgbb import (
 from .prompt_editor import PromptEditor, PromptHighlighter
 from .referencethumb import ClickableLabel, CloseButton, ReferenceThumb
 from .statusbar import StatusBar
-from .toggleswitch import AnimatedToggle
 
 __version__ = "0.2.0"
 
@@ -37,6 +38,7 @@ __all__ = [
     "FrameButton",
     "GenerateButton",
     "GlowButton",
+    "HeartCheckBox",
     "ImgBBApiError",
     "ImgBBClient",
     "ImgBBError",

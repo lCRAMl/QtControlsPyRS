@@ -5,15 +5,18 @@
 
 from __future__ import annotations
 
+import os
 import sys
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QColor, QFont, QPalette
 from PyQt6.QtWidgets import (
-    QApplication, QHBoxLayout, QLabel, QSizePolicy, QStyleFactory, QVBoxLayout, QWidget
+    QApplication, QHBoxLayout, QSizePolicy, QStyleFactory, QVBoxLayout, QWidget
 )
 
-from qt_controls_pyrs import AnimatedToggle, FrameButton, GlowButton, StatusBar
+from qt_controls_pyrs import (
+    AnimatedToggle, FrameButton, GlowButton, HeartCheckBox, ReferenceThumb, StatusBar
+)
 
 LONG_MESSAGE = (
     "Fehler: Unbekanntes Status-Antwortformat. Beispiel-Antwort: "
@@ -40,7 +43,7 @@ class Demo(QWidget):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("qt-controls-pyrs – Demo")
-        self.resize(560, 380)
+        self.resize(560, 520)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 12)
@@ -84,13 +87,25 @@ class Demo(QWidget):
         frames.addStretch(1)
         layout.addLayout(frames)
 
-        hint = QLabel(
-            "Knopf drücken: Beschriftung blendet über, der Rahmen leuchtet.\n"
-            "Nach 6 Sekunden kommt eine lange Meldung in die Statuszeile.\n"
-            "Den unteren Knopf nur überfahren: der Schleier geht, der Rahmen kommt."
+        # --- Bild-Miniatur und Herz ---
+        # Ohne Schlüssel bleibt es bei der Vorschau, hochgeladen wird nichts.
+        row = QHBoxLayout()
+        row.setSpacing(24)
+        self.thumb = ReferenceThumb(index=0, imgbb_api_key=os.environ.get("IMGBB_API_KEY", ""))
+        self.thumb.uploaded.connect(lambda i, url: self.status.setText(f"Hochgeladen: {url}"))
+        self.thumb.upload_failed.connect(lambda i, err: self.status.setText(f"Upload fehlgeschlagen: {err}"))
+        self.thumb.cleared.connect(lambda i: self.status.setText("Bild entfernt"))
+        row.addWidget(self.thumb)
+
+        self.heart = HeartCheckBox()
+        self.heart.setToolTip("Like")
+        self.heart.toggled.connect(
+            lambda on: self.status.setText("Gemerkt" if on else "Nicht mehr gemerkt")
         )
-        hint.setStyleSheet("color:#909090;")
-        layout.addWidget(hint)
+        row.addWidget(self.heart, 0, Qt.AlignmentFlag.AlignVCenter)
+        row.addStretch(1)
+        layout.addLayout(row)
+
         layout.addStretch(1)
 
         # --- Statuszeile: Platzhalter im Layout, Anzeige schwebt darüber ---
