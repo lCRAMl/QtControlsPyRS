@@ -17,8 +17,8 @@ Eigenständige Widgets und Helfer, die sich wie ihre Qt-Vorbilder verhalten:
   füllt und Funken wegstieben lässt.
 * :class:`StatusBar` – Statuszeile, die lange Meldungen kurz aufklappt, ohne
   die Fensteraufteilung zu verändern.
-* :class:`ReferenceThumb` – Bild-Miniatur zum Anklicken, die die gewählte Datei
-  zu ImgBB hochlädt und den Fortschritt anzeigt.
+* :class:`ReferenceThumb` – Bild-Miniatur als Karte, deren Rahmen dem Zeiger
+  nachleuchtet; lädt die gewählte Datei zu ImgBB hoch und zeigt den Fortschritt.
 * :class:`PromptEditor` – Eingabefeld, das Abschnittsüberschriften hervorhebt.
 * :func:`flash_taskbar` – lässt den Taskleisten-Eintrag blinken (Windows).
 """
@@ -34,7 +34,9 @@ from .imgbb import (
     ImgBBNetworkError, ImgBBUploadWorker, UploadResult
 )
 from .prompt_editor import PromptEditor, PromptHighlighter
-from .referencethumb import ClickableLabel, CloseButton, ReferenceThumb
+from .referencethumb import (
+    ClickableLabel, CloseButton, ReferenceThumb, ThumbOverlay
+)
 from .statusbar import StatusBar
 
 __version__ = "0.2.0"
@@ -63,6 +65,7 @@ __all__ = [
     "ShineButton",
     "SpreadButton",
     "StatusBar",
+    "ThumbOverlay",
     "UploadResult",
     "__version__",
     "flash_taskbar",

@@ -11,7 +11,7 @@ Bedienelemente für PyQt6, die sich nach außen wie ihre Qt-Vorbilder verhalten.
 | `AnimatedToggle` | `QCheckBox` | Schiebeschalter mit gleitendem Knopf |
 | `HeartCheckBox` | `QCheckBox` | Herz zum Anhaken: es füllt sich mit einem Hüpfer, sechs Funken stieben weg |
 | `StatusBar` | `QLabel` in einer Statuszeile | Klappt lange Meldungen kurz auf, ohne das Fenster zu verschieben |
-| `ReferenceThumb` | — | Bild-Miniatur zum Anklicken, lädt die Datei zu ImgBB hoch und zeigt den Fortschritt |
+| `ReferenceThumb` | — | Bild-Miniatur als Karte, deren Rahmen dem Mauszeiger nachleuchtet; lädt die Datei zu ImgBB hoch und zeigt den Fortschritt |
 | `PromptEditor` | `QTextEdit` | Hebt Abschnittsüberschriften im Text hervor |
 | `flash_taskbar()` | — | Lässt den Taskleisten-Eintrag blinken (Windows) |
 
@@ -402,14 +402,46 @@ thumb.cleared.connect(vergessen)
 Ein Klick öffnet den Dateidialog, danach läuft der Upload im Hintergrund
 (`ImgBBUploadWorker`, eigener Thread) und ein schmaler Balken unter dem Bild
 zeigt den Fortschritt: blau während des Hochladens, grün bei Erfolg, rot bei
-einem Fehler. Oben rechts erscheint ein kleiner Schließknopf. Ohne Schlüssel
-bleibt es bei der reinen Vorschau — es wird nichts hochgeladen.
+einem Fehler. Ohne Schlüssel bleibt es bei der reinen Vorschau — es wird nichts
+hochgeladen.
 
 Die drei Signale liefern immer den `index` mit, damit ein Feld aus mehreren
 Miniaturen mit einem einzigen Handler auskommt.
 
-Einstellbar: `THUMB_SIZE`, `WIDGET_HEIGHT`, `PROGRESS_HEIGHT` und die Farben
-`_COLOR_PROGRESS`, `_COLOR_UPLOADING`, `_COLOR_ERROR`.
+### Wie sie aussieht
+
+Leer ist sie eine dunkle Karte mit einem Pluszeichen, deren feiner Rahmen dort
+aufleuchtet, wo der Mauszeiger steht — nachgebaut nach dem CSS-Muster, bei dem
+ein `radial-gradient` dem Zeiger folgt und nur ein Streifen von einem Pixel
+davon zu sehen ist. Innen liegt dann zusätzlich ein weicher Schein, und die
+Karte schrumpft eine Spur (`HOVER_SCALE`, wie `transform: scale(0.98)`).
+
+Wie im Vorbild leuchten **alle** Miniaturen nebeneinander mit, nicht nur die
+unter dem Zeiger: jede bekommt dieselbe Stelle, rechnet sie in ihre eigenen
+Koordinaten um und wird zum Zeiger hin heller. Dafür braucht es keinen globalen
+Maus-Filter — die Miniatur gibt die Bewegung an ihre Geschwister im selben
+Elternteil weiter.
+
+Liegt ein Bild darin, bleibt das Leuchten auf dem Rahmen, und unter der Maus
+legt sich eine halbdurchsichtige Decke darüber (`ThumbOverlay`) mit einem runden
+X in der Mitte: es dreht sich beim Erscheinen zweimal schnell durch und kommt
+weich zum Stillstand. Das X entfernt das Bild, ein Klick daneben tauscht es aus.
+Unter der Maus färbt sich das X rot.
+
+Ein Unterschied zum Vorbild: dort ist der Rahmen unsichtbar, bis die Maus das
+erste Mal darüberfährt. Hier bleibt immer ein ruhiger Rahmen stehen
+(`RIM_ALPHA`), sonst sähe eine leere Karte aus wie ein Loch.
+
+Die Leuchtfarbe ist `#5a8cff` und wie beim `FiberHaloButton` austauschbar —
+über `GLOW_COLOR` für alle, `setGlowColor()` für eine einzelne. Der Rest kommt
+aus der Palette: die Kartenfläche aus `Base`, Pluszeichen und Rahmen aus
+`WindowText`.
+
+Einstellbar: `THUMB_SIZE`, `WIDGET_HEIGHT`, `PROGRESS_HEIGHT`, `RADIUS`,
+`HOVER_SCALE`, `HOVER_MS`, `GLOW_MS`, `GLOW_REACH`, `INNER_REACH`,
+`INNER_ALPHA`, `RIM_ALPHA` und die Farben `_COLOR_PROGRESS`,
+`_COLOR_UPLOADING`, `_COLOR_ERROR`. An der Decke: `ThumbOverlay.DIM` und
+`FADE_MS`, am X `CloseButton.SIZE`, `SPIN_MS`, `SPIN_TURNS` und `DANGER`.
 
 Der ImgBB-Zugriff liegt offen: `ImgBBClient` lädt eine Datei hoch (mit
 Fortschritts-Callback), `ImgBBUploadWorker` tut dasselbe in einem QThread, und

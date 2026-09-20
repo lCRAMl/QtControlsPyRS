@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- `ReferenceThumb` sieht neu aus: eine dunkle Karte, deren feiner Rahmen dort
+  aufleuchtet, wo der Mauszeiger steht, nach dem bekannten CSS-Muster mit dem
+  mitwandernden `radial-gradient`. Mehrere Miniaturen nebeneinander leuchten
+  gemeinsam. Leer zeigt sie ein Pluszeichen und innen zusätzlich einen weichen
+  Schein, mit Bild bleibt das Leuchten auf dem Rahmen. Leuchtfarbe `#5a8cff`,
+  über `GLOW_COLOR` und `setGlowColor()` austauschbar.
+- Der kleine X-Knopf oben rechts ist einer halbdurchsichtigen Decke gewichen
+  (`ThumbOverlay`), die unter der Maus über dem Bild aufblendet und ein rundes
+  X in der Mitte zeigt; das X dreht sich beim Erscheinen schnell durch und läuft
+  weich aus. Ein Klick daneben tauscht das Bild aus.
+- `ReferenceThumb` zeichnet sich jetzt selbst, statt ein Label mit Stylesheet zu
+  benutzen: `thumb.image` und `thumb.close_btn` gibt es nicht mehr. Dafür gibt
+  es `has_image()`, `pixmap()`, `message()` und `thumb.overlay`; `__init__`
+  nimmt zusätzlich ein `parent`.
 - `FiberHaloButton` aufgenommen: der `HaloButton` mit Arbeitsanzeige. Nach dem
   Klick füllt sich die ganze Fläche — ein tiefer Grund, darüber ziehende
   Farbflächen in Nuancen der Grundfarbe, aufblitzende Lichter und fünf
