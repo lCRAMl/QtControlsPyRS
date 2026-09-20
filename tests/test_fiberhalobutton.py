@@ -79,20 +79,36 @@ def test_klick_startet_die_anzeige(qtbot):
     assert button.busy_fade == 1.0
 
 
-def test_beschriftung_wechselt_waehrend_der_arbeit(qtbot, paint):
+def test_beschriftung_blendet_ueber(qtbot, paint):
     button = make(qtbot)
     assert button._label() == "GENERATE"
+    assert button.label_fade == 0.0
 
     button.start_busy()
-    assert button._label() == "GENERATING"
+    # Unterwegs liegen beide Beschriftungen uebereinander.
+    qtbot.waitUntil(lambda: 0.0 < button.label_fade < 1.0, timeout=1000)
+    paint(button)
+    qtbot.waitUntil(lambda: button.label_fade == 1.0, timeout=2000)
     paint(button)
 
     button.stop_busy()
-    assert button._label() == "GENERATE"
+    qtbot.waitUntil(lambda: button.label_fade == 0.0, timeout=2000)
 
     button.start_busy("Laeuft")
     assert button.busy_text() == "Laeuft"
-    assert button._label() == "LAEUFT"
+    qtbot.waitUntil(lambda: button.label_fade == 1.0, timeout=2000)
+    paint(button)
+
+
+def test_ohne_arbeitstext_bleibt_die_beschriftung_stehen(qtbot, paint):
+    button = FiberHaloButton("Generate", busy_text="")
+    qtbot.addWidget(button)
+    button.show()
+
+    button.start_busy()
+    qtbot.wait(400)
+    assert button.label_fade == 0.0
+    paint(button)
 
 
 def test_platz_fuer_beide_beschriftungen(qtbot):

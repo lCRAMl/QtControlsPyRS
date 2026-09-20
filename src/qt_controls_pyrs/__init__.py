@@ -10,8 +10,10 @@ Eigenständige Widgets und Helfer, die sich wie ihre Qt-Vorbilder verhalten:
 * :class:`DashBorderButton`, :class:`SpreadButton`, :class:`RaisedButton`,
   :class:`ShineButton`, :class:`HaloButton` – fünf Knöpfe aus einer
   CSS-Sammlung, jeder mit einer eigenen Bewegung unter der Maus.
-* :class:`FiberHaloButton` – wie :class:`HaloButton`, zeigt während einer
-  laufenden Aufgabe aber ziehende Farbflächen und schwingende Fasern.
+* :class:`PulseHaloButton` – wie :class:`HaloButton`, lässt während einer
+  laufenden Aufgabe aber Striche aus dem Rahmen wandern.
+* :class:`FiberHaloButton` – dasselbe auffälliger: ziehende Farbflächen
+  und schwingende Fasern füllen die ganze Fläche.
 * :class:`AnimatedToggle` – Schiebeschalter als Ersatz für ``QCheckBox``.
 * :class:`HeartCheckBox` – Herz zum Anhaken, das sich mit einem Hüpfer
   füllt und Funken wegstieben lässt.
@@ -24,8 +26,9 @@ Eigenständige Widgets und Helfer, die sich wie ihre Qt-Vorbilder verhalten:
 """
 
 from .buttons import (
-    DashBorderButton, FiberHaloButton, FrameButton, GenerateButton, GlowButton,
-    HaloButton, RaisedButton, ShineButton, SpreadButton
+    BusyHaloButton, DashBorderButton, FiberHaloButton, FrameButton,
+    GenerateButton, GlowButton, HaloButton, PulseHaloButton, RaisedButton,
+    ShineButton, SpreadButton
 )
 from .checkboxes import AnimatedToggle, HeartCheckBox
 from .flashtaskbar import flash_taskbar, stop_flashing
@@ -43,6 +46,7 @@ __version__ = "0.2.0"
 
 __all__ = [
     "AnimatedToggle",
+    "BusyHaloButton",
     "ClickableLabel",
     "CloseButton",
     "DashBorderButton",
@@ -59,6 +63,7 @@ __all__ = [
     "ImgBBNetworkError",
     "ImgBBUploadWorker",
     "PromptEditor",
+    "PulseHaloButton",
     "PromptHighlighter",
     "RaisedButton",
     "ReferenceThumb",

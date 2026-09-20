@@ -223,11 +223,17 @@ class _HoverButton(QPushButton):
         """Alles unter der Beschriftung — hier tun die Unterklassen ihre Arbeit."""
 
     def _paint_label(self, painter: QPainter, rect: QRectF, hover: float) -> None:
+        self._draw_label(painter, rect, hover, self._label())
+
+    def _draw_label(
+        self, painter: QPainter, rect: QRectF, hover: float, text: str
+    ) -> None:
+        """Zeichnet eine Beschriftung. Getrennt, damit Unterklassen zwei davon
+        übereinanderlegen und überblenden können."""
         painter.setFont(self._label_font(hover))
         # letter-spacing hängt auch hinter dem letzten Buchstaben — ohne diesen
         # Ausgleich säße die Beschriftung sichtbar zu weit links.
         box = rect.translated(self._spacing(hover) / 2, 0)
-        text = self._label()
 
         shadow = self._text_shadow(hover)
         if shadow is not None:

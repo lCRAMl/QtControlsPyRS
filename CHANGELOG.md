@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- `PulseHaloButton` aufgenommen: der `HaloButton` mit einer zurückhaltenden
+  Arbeitsanzeige. Aus dem Rahmen lösen sich Striche und wandern nach außen, die
+  Fläche bleibt leer. Für Stellen, an denen eine Anzeige nötig ist, aber nichts
+  blinken soll.
+- Die Arbeits-Beschriftung wird jetzt überblendet statt hart getauscht: die eine
+  blendet aus, die andere an derselben Stelle ein (`SWAP_MS`). Gilt für beide
+  arbeitenden Halo-Knöpfe.
+- Zustand, Takt und Beschriftung der arbeitenden Halo-Knöpfe stehen jetzt in
+  `BusyHaloButton`. `FiberHaloButton` erbt davon, sein Verhalten und seine API
+  bleiben unverändert; eine eigene Anzeige braucht nur noch `_paint_busy()`.
 - `ReferenceThumb` sieht neu aus: eine dunkle Karte, deren feiner Rahmen dort
   aufleuchtet, wo der Mauszeiger steht, nach dem bekannten CSS-Muster mit dem
   mitwandernden `radial-gradient`. Mehrere Miniaturen nebeneinander leuchten

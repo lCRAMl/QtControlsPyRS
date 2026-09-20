@@ -1,57 +1,40 @@
 # fiberhalobutton.py
 #
-# `HaloButton` mit Arbeitsanzeige: solange die Aufgabe läuft, füllt eine
-# Animation die ganze Fläche des Knopfes — dahinter ziehen weiche Flächen in
-# Nuancen der Grundfarbe durch, darüber schwingen dünne Glasfasern.
+# `BusyHaloButton`, dessen Anzeige die ganze Fläche füllt: dahinter ziehen
+# weiche Flächen in Nuancen der Grundfarbe durch, darüber schwingen dünne
+# Glasfasern. Zustand, Takt und die überblendende Beschriftung kommen aus
+# busyhalo.py.
 
 from __future__ import annotations
 
 import math
 
-from PyQt6.QtCore import (
-    QAbstractAnimation, QEasingCurve, QPointF, QPropertyAnimation, QRectF, QSize,
-    Qt, pyqtProperty
-)
-from PyQt6.QtGui import (
-    QBrush, QColor, QFontMetricsF, QLinearGradient, QPainter, QPainterPath, QPen,
-    QRadialGradient
-)
+from PyQt6.QtCore import QPointF, QRectF, Qt
+from PyQt6.QtGui import QBrush, QColor, QLinearGradient, QPainter, QPainterPath, QPen, QRadialGradient
 
-from .hoverbuttons import HaloButton, _faded, _mix
+from .busyhalo import BusyHaloButton, _clamp
+from .hoverbuttons import _faded, _mix
 
 
-def _clamp(value: float) -> float:
-    return max(0.0, min(1.0, value))
+class FiberHaloButton(BusyHaloButton):
+    """Arbeitet auffällig: die ganze Fläche des Knopfes füllt sich.
 
+    Unter der Maus verhält er sich wie der `HaloButton`. Nach dem Klick — oder
+    nach `start_busy()` — liegt zuunterst ein tiefer Ton der Grundfarbe, darüber
+    ziehen weiche Flächen in verschiedenen Nuancen davon langsam durch den
+    Knopf, dazwischen blitzen ein paar helle Lichter auf. Darüber schwingen
+    dünne Glasfasern von Rand zu Rand, und in jeder wandert ein Lichtpaket
+    entlang. Weil alle Bewegungen gegeneinander verschoben sind, wiederholt sich
+    das Bild nie sichtbar.
 
-class FiberHaloButton(HaloButton):
-    """Wie der `HaloButton`, zeigt aber an, dass gerade etwas läuft.
-
-    Unter der Maus verhält er sich unverändert: der Strich wandert nach außen
-    und verblasst, innen wie außen kommt ein Schein auf.
-
-    Nach dem Klick — oder nach `start_busy()` — füllt sich die ganze Fläche.
-    Zuunterst liegt ein tiefer Ton der Grundfarbe, darüber ziehen weiche
-    Flächen in verschiedenen Nuancen davon langsam durch den Knopf, dazwischen
-    blitzen ein paar helle Lichter auf. Darüber schwingen dünne Glasfasern von
-    Rand zu Rand, und in jeder wandert ein Lichtpaket entlang. Alles läuft
-    absichtlich langsam: ein voller Durchlauf dauert `CYCLE_MS`, und die
-    einzelnen Bewegungen sind gegeneinander verschoben, sodass sich das Bild
-    nie sichtbar wiederholt. `stop_busy()` blendet alles wieder aus.
-
-    Die Grundfarbe der Animation ist die einzige Farbe, die nicht aus der
-    Palette kommt — sie soll auffallen. Alle Nuancen leiten sich von ihr ab,
-    ein Wechsel über `ACCENT` oder `setAccentColor()` färbt also das ganze
-    Bild um.
+    Alle Nuancen leiten sich von der Grundfarbe ab, ein Wechsel über `ACCENT`
+    oder `setAccentColor()` färbt also das ganze Bild um.
     """
 
-    ACCENT     = "#5a8cff"   # Grundfarbe der Animation
-    FIBERS     = 5           # Anzahl der Fasern
-    SWING      = 0.34        # größte Auslenkung, Anteil der Höhe
-    CYCLE_MS   = 9000        # Dauer eines vollen Durchlaufs
-    FADE_MS    = 450         # Ein- und Ausblenden der Anzeige
-    PACKET     = 0.16        # Länge des Lichtpakets, Anteil der Breite
-    AUTO_BUSY  = True        # Ein Klick startet die Anzeige von allein
+    FIBERS   = 5        # Anzahl der Fasern
+    SWING    = 0.34     # größte Auslenkung, Anteil der Höhe
+    PACKET   = 0.16     # Länge des Lichtpakets, Anteil der Breite
+    CYCLE_MS = 9000     # Dauer eines vollen Durchlaufs
 
     # Der Grund, auf dem alles liegt: ein tiefer, satter Ton der Grundfarbe.
     GROUND = (-0.02, 0.95, 0.30)   # Farbton-Versatz, Sättigung, Helligkeit
@@ -73,126 +56,6 @@ class FiberHaloButton(HaloButton):
         (1.45, 0.52, 0.30, 0.70),
     )
 
-    def __init__(self, text: str = "", busy_text: str = "", parent=None) -> None:
-        self._phase = 0.0        # Position der Bewegung, 0..1, läuft um
-        self._busy_fade = 0.0    # 0 = keine Anzeige, 1 = ganz da
-        self._busy = False
-        self._busy_text = busy_text
-        self._accent = QColor(self.ACCENT)
-        super().__init__(text, parent)
-
-        self._cycle = QPropertyAnimation(self, b"phase", self)
-        self._cycle.setStartValue(0.0)
-        self._cycle.setEndValue(1.0)
-        self._cycle.setDuration(self.CYCLE_MS)
-        self._cycle.setEasingCurve(QEasingCurve.Type.Linear)
-        self._cycle.setLoopCount(-1)
-
-        self._fade = QPropertyAnimation(self, b"busy_fade", self)
-        self._fade.setDuration(self.FADE_MS)
-        self._fade.setEasingCurve(QEasingCurve.Type.InOutCubic)
-        self._fade.finished.connect(self._on_fade_finished)
-
-        if self.AUTO_BUSY:
-            self.clicked.connect(self._on_clicked)
-
-    # ==============================
-    # Öffentliche API
-    # ==============================
-
-    def start_busy(self, label: str | None = None) -> None:
-        """Blendet die Animation auf."""
-        if label is not None:
-            self.setBusyText(label)
-        self._busy = True
-        if self._cycle.state() != QAbstractAnimation.State.Running:
-            self._cycle.start()
-        self._animate_fade(1.0)
-
-    def stop_busy(self) -> None:
-        """Blendet die Animation wieder aus."""
-        self._busy = False
-        self._animate_fade(0.0)
-
-    def is_busy(self) -> bool:
-        return self._busy
-
-    def busy_text(self) -> str:
-        return self._busy_text
-
-    def setBusyText(self, label: str) -> None:
-        """Beschriftung, solange die Aufgabe läuft. Leer heißt: gleich bleiben."""
-        self._busy_text = label
-        self.updateGeometry()
-        self.update()
-
-    def accent_color(self) -> QColor:
-        return QColor(self._accent)
-
-    def setAccentColor(self, color) -> None:
-        """Die Grundfarbe der Animation, nur für diesen Knopf."""
-        self._accent = QColor(color)
-        self.update()
-
-    # ==============================
-    # Animierte Eigenschaften
-    # ==============================
-
-    @pyqtProperty(float)
-    def phase(self) -> float:
-        return self._phase
-
-    @phase.setter
-    def phase(self, value: float) -> None:
-        self._phase = value
-        if self._busy_fade > 0.0:
-            self.update()
-
-    @pyqtProperty(float)
-    def busy_fade(self) -> float:
-        return self._busy_fade
-
-    @busy_fade.setter
-    def busy_fade(self, value: float) -> None:
-        self._busy_fade = value
-        self.update()
-
-    def _animate_fade(self, target: float) -> None:
-        self._fade.stop()
-        self._fade.setStartValue(self._busy_fade)
-        self._fade.setEndValue(target)
-        self._fade.start()
-
-    def _on_fade_finished(self) -> None:
-        # Die Bewegung erst anhalten, wenn nichts mehr davon zu sehen ist.
-        if not self._busy and self._busy_fade <= 0.0:
-            self._cycle.stop()
-            self.update()
-
-    def _on_clicked(self) -> None:
-        if not self._busy:
-            self.start_busy()
-
-    # ==============================
-    # Beschriftung
-    # ==============================
-
-    def _label_text(self) -> str:
-        if self._busy and self._busy_text:
-            return self._busy_text
-        return self.text()
-
-    def sizeHint(self) -> QSize:
-        # Beide Beschriftungen müssen passen, sonst rutscht das Fenster, sobald
-        # die Aufgabe losläuft.
-        hint = super().sizeHint()
-        if not self._busy_text:
-            return hint
-        text = self._busy_text.upper() if self.UPPERCASE else self._busy_text
-        width = QFontMetricsF(self._label_font(1.0)).horizontalAdvance(text)
-        needed = int(round(width)) + 2 * self.PAD + 2 * self.ROOM
-        return QSize(max(hint.width(), needed), hint.height())
-
     # ==============================
     # Farbnuancen
     # ==============================
@@ -212,7 +75,7 @@ class FiberHaloButton(HaloButton):
         )
 
     # ==============================
-    # Darstellung
+    # Die ziehenden Flächen
     # ==============================
 
     def _drift(self, speed: float, rect: QRectF, width: float) -> float:
@@ -278,6 +141,10 @@ class FiberHaloButton(HaloButton):
                 self._nuance(0.0, 0.14, 1.45, alpha * breath), focus=0.20,
             )
 
+    # ==============================
+    # Die Fasern
+    # ==============================
+
     def _light_pen(
         self, rect: QRectF, base: QColor, position: float, width: float
     ) -> QPen:
@@ -331,10 +198,10 @@ class FiberHaloButton(HaloButton):
         span = max(self.FIBERS - 1, 1)
         for index in range(self.FIBERS):
             path, position = self._fiber_path(rect, index)
-            # Innen hell wie die Schrift, nach außen in der Grundfarbe.
+            # Innen die Farbe der Schrift, nach außen die Grundfarbe.
             color = _mix(
                 _faded(ink, 0.55), self._nuance(0.02, 0.55, 1.30, 0.85),
-                0.15 + 0.85 * (index / span),
+                0.12 + 0.88 * (index / span),
             )
             # Erst das weiche Leuchten, dann der Kern mit dem Lichtpaket.
             painter.setPen(QPen(_faded(color, color.alphaF() * 0.30), 3.4))
@@ -342,24 +209,11 @@ class FiberHaloButton(HaloButton):
             painter.setPen(self._light_pen(rect, color, position, 1.3))
             painter.drawPath(path)
 
+    # ==============================
+    # Die Anzeige
+    # ==============================
+
     def _paint_busy(self, painter: QPainter, rect: QRectF, ink: QColor) -> None:
-        if rect.width() < 12 or rect.height() < 6:
-            return
-
-        painter.save()
-        # Die Anzeige bleibt kräftig, auch wenn der Knopf während der Aufgabe
-        # gesperrt ist — sonst wäre gerade das nicht zu sehen, worauf man wartet.
-        painter.setOpacity(_clamp(self._busy_fade))
         painter.setClipRect(rect)
-
         self._paint_ground(painter, rect)
         self._paint_fibers(painter, rect, ink)
-
-        painter.restore()
-
-    def _paint_surface(self, painter: QPainter, rect: QRectF, hover: float) -> None:
-        # Erst die Animation, dann der Halo — sein Strich und sein Schein
-        # sollen darüber liegen, nicht darunter verschwinden.
-        if self._busy_fade > 0.0:
-            self._paint_busy(painter, rect, self._ink(hover))
-        super()._paint_surface(painter, rect, hover)

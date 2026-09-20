@@ -7,7 +7,8 @@ Bedienelemente für PyQt6, die sich nach außen wie ihre Qt-Vorbilder verhalten.
 | `GlowButton` | `QPushButton` | Zeigt an, dass eine Aufgabe läuft: Beschriftung blendet über, Rahmen leuchtet in wandernden Regenbogenfarben |
 | `FrameButton` | `QPushButton` | Gibt unter der Maus seinen Schleier ab und fängt dafür einen feinen Rahmen ein, der von außen hereinfährt |
 | `DashBorderButton`, `SpreadButton`, `RaisedButton`, `ShineButton`, `HaloButton` | `QPushButton` | Fünf Knöpfe aus einer CSS-Sammlung, jeder mit einer eigenen Bewegung unter der Maus |
-| `FiberHaloButton` | `QPushButton` | Wie `HaloButton`, füllt sich während der laufenden Aufgabe mit ziehenden Farbflächen und schwingenden Fasern |
+| `PulseHaloButton` | `QPushButton` | Wie `HaloButton`, lässt während der laufenden Aufgabe ruhig Striche aus dem Rahmen wandern |
+| `FiberHaloButton` | `QPushButton` | Dasselbe auffälliger: ziehende Farbflächen und schwingende Fasern füllen die ganze Fläche |
 | `AnimatedToggle` | `QCheckBox` | Schiebeschalter mit gleitendem Knopf |
 | `HeartCheckBox` | `QCheckBox` | Herz zum Anhaken: es füllt sich mit einem Hüpfer, sechs Funken stieben weg |
 | `StatusBar` | `QLabel` in einer Statuszeile | Klappt lange Meldungen kurz auf, ohne das Fenster zu verschieben |
@@ -223,6 +224,77 @@ samt Kurven, `UPPERCASE`, `WEIGHT_REST`/`WEIGHT_HOVER` und
 `GAP` und `OFFSET` beim `DashBorderButton` oder `INNER_GLOW` und `OUTER_GLOW`
 beim `HaloButton`.
 
+## PulseHaloButton
+
+```python
+from qt_controls_pyrs import PulseHaloButton
+
+button = PulseHaloButton("Generate", busy_text="Generating")
+button.clicked.connect(start)
+
+def start():
+    # Der Klick hat die Anzeige schon gestartet (AUTO_BUSY).
+    starte_aufgabe()
+
+def done():
+    button.stop_busy()
+```
+
+Der `HaloButton` mit einer zurückhaltenden Arbeitsanzeige: unter der Maus
+verhält er sich unverändert, und solange etwas läuft, lösen sich Striche aus
+seinem Rahmen und wandern nach außen, wo sie verblassen. `RINGS` davon sind
+gleichzeitig unterwegs, gegeneinander versetzt, damit nie eine Lücke entsteht;
+auf halbem Weg sind sie am kräftigsten. Die Fläche bleibt dabei leer — gedacht
+für Stellen, an denen eine Anzeige nötig ist, aber nichts blinken oder flimmern
+soll.
+
+Gleichzeitig blendet die Ruhe-Beschriftung aus und die Arbeits-Beschriftung an
+derselben Stelle ein; beim Anhalten umgekehrt. Ohne `busy_text` bleibt die
+Beschriftung einfach stehen.
+
+### Steuerung
+
+Dieselbe wie beim `GlowButton`, ein Austausch ist also unauffällig:
+
+```python
+button.start_busy("Generating")   # Beschriftung blendet mit über
+button.stop_busy()
+button.is_busy()
+```
+
+`AUTO_BUSY = True` heißt: ein Klick startet die Anzeige von allein, beendet wird
+sie von der Anwendung. Wer das nicht will — etwa weil die Anwendung nach dem
+Klick noch prüft und abbrechen kann —, setzt die Konstante auf `False` und ruft
+`start_busy()` selbst auf.
+
+Sperrt die Anwendung den Knopf, solange sie arbeitet (`setEnabled(False)`),
+bleibt die Anzeige trotzdem kräftig — gerade sie soll man ja sehen, während man
+wartet. Alles andere am Knopf blasst wie gewohnt ab. `sizeHint()` rechnet immer
+mit der breiteren der beiden Beschriftungen, damit der Knopf nicht springt,
+sobald die Aufgabe losläuft.
+
+Einstellbar: `RINGS`, `RING_W` und `RING_ALPHA` (die wandernden Striche),
+`CYCLE_MS` (Dauer eines Durchlaufs, länger heißt ruhiger), `FADE_MS` (Ein- und
+Ausblenden), `SWAP_MS` (Überblenden der Beschriftung), `ACCENT` und alles vom
+`HaloButton`.
+
+### Die gemeinsame Grundlage
+
+Zustand, Takt und die überblendende Beschriftung stehen in `BusyHaloButton`;
+`PulseHaloButton` und `FiberHaloButton` erben davon und unterscheiden sich nur
+darin, was sie damit zeichnen. Wer eine eigene Anzeige will, erbt ebenfalls und
+überschreibt eine einzige Methode:
+
+```python
+from qt_controls_pyrs import BusyHaloButton
+
+class BalkenButton(BusyHaloButton):
+    def _paint_busy(self, painter, rect, ink):
+        # `self.phase` läuft in CYCLE_MS von 0 nach 1 und wieder von vorn;
+        # die Deckkraft hat der Aufrufer schon gesetzt.
+        ...
+```
+
 ## FiberHaloButton
 
 ```python
@@ -256,25 +328,10 @@ und Ausblenden liegt ein kurzer Übergang, und die Bewegung hält erst an, wenn
 nichts mehr davon zu sehen ist. Der Halo-Strich und sein Schein liegen über der
 Animation, nicht darunter.
 
-Die Steuerung ist dieselbe wie beim `GlowButton`, ein Austausch ist also
-unauffällig:
-
-```python
-button.start_busy("Generating")   # Beschriftung wechselt mit
-button.stop_busy()
-button.is_busy()
-```
-
-Sperrt die Anwendung den Knopf, solange sie arbeitet (`setEnabled(False)`),
-bleibt die Animation trotzdem kräftig — gerade sie soll man ja sehen, während man
-wartet. Alles andere am Knopf blasst wie gewohnt ab.
-
-`AUTO_BUSY = True` heißt: ein Klick startet die Anzeige von allein, beendet wird
-sie von der Anwendung. Wer das nicht will, setzt die Konstante auf `False` und
-ruft `start_busy()` selbst auf. Die Beschriftung während der Arbeit ist
-freiwillig — ohne `busy_text` bleibt sie stehen. `sizeHint()` rechnet immer mit
-der breiteren der beiden Beschriftungen, damit der Knopf nicht springt, sobald
-die Aufgabe losläuft.
+Gesteuert wird er genau wie der `PulseHaloButton` — `start_busy()`,
+`stop_busy()`, `is_busy()`, `AUTO_BUSY`, die überblendende Beschriftung und das
+Verhalten im gesperrten Zustand stehen dort beschrieben. Beide erben das von
+`BusyHaloButton`, ein Austausch untereinander ist also eine Zeile.
 
 ### Farben ändern
 
