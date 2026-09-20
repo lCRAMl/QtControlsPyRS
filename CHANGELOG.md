@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- `FrameButton` aufgenommen: Knopf nach dem CSS-Muster `.btn-three`. Unter der
+  Maus schrumpft der Schleier über der Fläche zur Mitte und verblasst, während
+  ein feiner Rahmen von außen hereinfährt; die Fläche hellt dabei langsamer auf.
+  Die Farben kommen aus der Palette, damit der Knopf im Hell- wie im Dunkelmodus
+  stimmt. Für den hereinfahrenden Rahmen hält der Knopf einen Rand frei
+  (`RING_ROOM`), den `sizeHint()` mitrechnet.
+
 ## 0.2.0 – 2026-09-20
 
 - Paket heißt jetzt `qt_controls_pyrs` (vorher `qt_controls`).

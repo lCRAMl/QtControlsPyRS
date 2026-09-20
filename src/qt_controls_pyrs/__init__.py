@@ -5,6 +5,8 @@ Eigenständige Widgets und Helfer, die sich wie ihre Qt-Vorbilder verhalten:
 * :class:`GlowButton` – Knopf, der während einer laufenden Aufgabe die
   Beschriftung überblendet und den Rahmen in wandernden Regenbogenfarben
   leuchten lässt.
+* :class:`FrameButton` – Knopf, der unter der Maus seinen Schleier abgibt und
+  einen feinen Rahmen von außen hereinfahren lässt.
 * :class:`AnimatedToggle` – Schiebeschalter als Ersatz für ``QCheckBox``.
 * :class:`StatusBar` – Statuszeile, die lange Meldungen kurz aufklappt, ohne
   die Fensteraufteilung zu verändern.
@@ -15,6 +17,7 @@ Eigenständige Widgets und Helfer, die sich wie ihre Qt-Vorbilder verhalten:
 """
 
 from .flashtaskbar import flash_taskbar, stop_flashing
+from .framebutton import FrameButton
 from .glowbutton import GenerateButton, GlowButton
 from .imgbb import (
     ImgBBApiError, ImgBBClient, ImgBBError, ImgBBFileNotFoundError,
@@ -31,6 +34,7 @@ __all__ = [
     "AnimatedToggle",
     "ClickableLabel",
     "CloseButton",
+    "FrameButton",
     "GenerateButton",
     "GlowButton",
     "ImgBBApiError",

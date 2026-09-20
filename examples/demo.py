@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import (
     QApplication, QHBoxLayout, QLabel, QSizePolicy, QStyleFactory, QVBoxLayout, QWidget
 )
 
-from qt_controls_pyrs import AnimatedToggle, GlowButton, StatusBar
+from qt_controls_pyrs import AnimatedToggle, FrameButton, GlowButton, StatusBar
 
 LONG_MESSAGE = (
     "Fehler: Unbekanntes Status-Antwortformat. Beispiel-Antwort: "
@@ -40,7 +40,7 @@ class Demo(QWidget):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("qt-controls-pyrs – Demo")
-        self.resize(560, 320)
+        self.resize(560, 380)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 12)
@@ -65,15 +65,29 @@ class Demo(QWidget):
         )
 
         # --- Knopf mit Arbeitsanzeige ---
-        self.button = GlowButton("✨ Generate AI", busy_text="Generating")
+        self.button = GlowButton("✨ Generate AI", busy_text="✨ Generating")
         self.button.setFixedHeight(50)
         self.button.setFont(QFont("", 14, QFont.Weight.Bold))
         self.button.clicked.connect(self.run_task)
         layout.addWidget(self.button)
 
+        # --- Knopf mit Rahmen unter der Maus ---
+        frames = QHBoxLayout()
+        frames.setSpacing(12)
+        self.frame_button = FrameButton("Mit Rahmen")
+        self.frame_button.setFixedHeight(44)
+        self.frame_button.setMinimumWidth(160)
+        self.frame_button.clicked.connect(
+            lambda: self.status.setText("FrameButton gedrückt")
+        )
+        frames.addWidget(self.frame_button)
+        frames.addStretch(1)
+        layout.addLayout(frames)
+
         hint = QLabel(
             "Knopf drücken: Beschriftung blendet über, der Rahmen leuchtet.\n"
-            "Nach 6 Sekunden kommt eine lange Meldung in die Statuszeile."
+            "Nach 6 Sekunden kommt eine lange Meldung in die Statuszeile.\n"
+            "Den unteren Knopf nur überfahren: der Schleier geht, der Rahmen kommt."
         )
         hint.setStyleSheet("color:#909090;")
         layout.addWidget(hint)

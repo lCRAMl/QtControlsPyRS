@@ -5,6 +5,7 @@ Bedienelemente für PyQt6, die sich nach außen wie ihre Qt-Vorbilder verhalten.
 | Baustein | Ersetzt | Wofür |
 | --- | --- | --- |
 | `GlowButton` | `QPushButton` | Zeigt an, dass eine Aufgabe läuft: Beschriftung blendet über, Rahmen leuchtet in wandernden Regenbogenfarben |
+| `FrameButton` | `QPushButton` | Gibt unter der Maus seinen Schleier ab und fängt dafür einen feinen Rahmen ein, der von außen hereinfährt |
 | `AnimatedToggle` | `QCheckBox` | Schiebeschalter mit gleitendem Knopf und Puls beim Umschalten |
 | `StatusBar` | `QLabel` in einer Statuszeile | Klappt lange Meldungen kurz auf, ohne das Fenster zu verschieben |
 | `ReferenceThumb` | — | Bild-Miniatur zum Anklicken, lädt die Datei zu ImgBB hoch und zeigt den Fortschritt |
@@ -34,7 +35,7 @@ also braucht die `.spec` keine Zusatzeinträge.
 python examples/demo.py
 ```
 
-Zeigt alle drei Widgets in einem Fenster, im Dunkelmodus.
+Zeigt Schalter, beide Knöpfe und die Statuszeile in einem Fenster, im Dunkelmodus.
 
 ## GlowButton
 
@@ -70,6 +71,45 @@ Einstellbar über Klassenkonstanten: `RADIUS`, `BORDER_W`, `GLOW_W`, `GLOW_A`,
 gleich sein, damit das Band nahtlos umläuft).
 
 `GenerateButton` ist ein Alias auf `GlowButton` für älteren Code.
+
+## FrameButton
+
+```python
+from qt_controls_pyrs import FrameButton
+
+button = FrameButton("Mit Rahmen")
+button.setFixedHeight(44)
+button.clicked.connect(los)
+```
+
+Nachbau des CSS-Musters `.btn-three`: im Ruhezustand liegt ein hauchdünner
+Schleier (10 %) über der ganzen Fläche und kein Rahmen ist zu sehen. Kommt die
+Maus darauf, schrumpft der Schleier in 300 ms zur Mitte und verblasst, während
+gleichzeitig ein feiner Rahmen (50 %) von außen hereinfährt und sichtbar wird.
+Beim Verlassen läuft beides rückwärts. Die Fläche darunter hellt in 500 ms leicht
+auf — das ist das `transition: all 0.5s` der Vorlage.
+
+Schleier und Rahmen nehmen die Textfarbe aus der Palette, nicht fest Weiß: im
+Dunkelmodus ist das dasselbe wie im CSS, im Hellmodus wären weiße Schichten auf
+hellem Grund unsichtbar. Der Knopf zeichnet auch seine Beschriftung selbst,
+damit Schleier und Rahmen darüber liegen (in CSS haben beide `z-index: 1`) und
+die Schrift im gesperrten Zustand lesbar bleibt.
+
+Der Rahmen startet außerhalb der Fläche, und Qt zeichnet nicht über den
+Widget-Rand hinaus. Deshalb hält der Knopf `RING_ROOM` Pixel Rand frei: die
+sichtbare Fläche ist etwas kleiner als die Widget-Geometrie, `sizeHint()` rechnet
+den Rand mit ein. Bei kleinen Knöpfen entspricht der Weg genau `scale(1.2)`, bei
+breiten bleibt er bei `RING_ROOM` Pixeln stehen, statt mit der Breite
+mitzuwachsen — sonst käme der Rahmen bei einem breiten Knopf von sehr weit außen
+und die Fläche müsste ein Fünftel der Breite dafür hergeben.
+
+Wird der Knopf gesperrt, während die Maus darauf steht, nimmt er Schleier und
+Rahmen selbst zurück — ein gesperrtes Widget bekommt kein `leaveEvent` mehr.
+
+Einstellbar über Klassenkonstanten: `RADIUS` (0 = eckig wie im CSS), `VEIL_A`
+und `VEIL_END` (Deckkraft und Endgröße des Schleiers), `RING_A`, `RING_W`,
+`RING_START` und `RING_ROOM` (Rahmen), `HOVER_MS`, `TINT_MS` und `TINT`
+(Aufhellung der Fläche, 100 = keine).
 
 ## AnimatedToggle
 
