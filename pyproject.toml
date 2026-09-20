@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qt-controls-pyrs"
+dynamic = ["version"]
+description = "Bedienelemente für PyQt6: Glow-Button, Schiebeschalter, aufklappende Statuszeile, Bild-Miniatur mit Upload"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "lCRAMl" }]
+# requests nur fuer den ImgBB-Upload von ReferenceThumb
+dependencies = ["PyQt6>=6.5", "requests>=2.28"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Framework :: PyQt",
+    "Environment :: X11 Applications :: Qt",
+    "Topic :: Software Development :: User Interfaces",
+    "Typing :: Typed",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "pytest-qt>=4.4"]
+
+[tool.setuptools.dynamic]
+version = { attr = "qt_controls_pyrs.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+qt_controls_pyrs = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

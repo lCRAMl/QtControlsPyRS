@@ -1,0 +1,30 @@
+# Changelog
+
+## 0.2.0 – 2026-09-20
+
+- Paket heißt jetzt `qt_controls_pyrs` (vorher `qt_controls`).
+- `ReferenceThumb` samt ImgBB-Anbindung (`ImgBBClient`, `ImgBBUploadWorker`)
+  aufgenommen. Neue Abhängigkeit: `requests`.
+- `PromptEditor` mit `PromptHighlighter` aufgenommen, von PySide6 nach PyQt6
+  portiert. Die Abschnitte werden jetzt direkt übergeben
+  (`PromptEditor(["Motiv", "Stil"])`) statt über ein Config-Objekt;
+  `reload_sections()` heißt `setSections()`.
+- `flash_taskbar()` aufgenommen, mit Schutz für Nicht-Windows-Systeme,
+  einstellbarer Blinkzahl und `stop_flashing()`.
+- `StatusBar` richtet sich beim Erzeugen und beim Anzeigen selbst aus.
+
+## 0.1.0 – 2026-09-20
+
+Erste Fassung. Die drei Widgets stammen aus dem Projekt APIImageGenerator und
+wurden für die Wiederverwendung herausgelöst.
+
+- `GlowButton`: Ruhezustand mit abgerundeter Fläche und Rahmen in der
+  Akzentfarbe. Während einer laufenden Aufgabe blenden Ruhe- und
+  Arbeits-Beschriftung ineinander über (Zoom + Sichtbarkeit) und der Rahmen
+  leuchtet in waagrecht wandernden Regenbogenfarben. Alias `GenerateButton`.
+- `AnimatedToggle`: Schiebeschalter mit gleitendem Knopf und Puls, portiert
+  nach PyQt6, mit mitgezeichneter Beschriftung und Farben aus der Palette.
+- `StatusBar`: Statuszeile, die lange Meldungen über dem darüberliegenden
+  Inhalt aufklappt, nach einer Haltezeit wieder zusammenklappt und dann
+  Scroll-Pfeile anbietet. Richtet sich selbstständig neu aus, wenn ihr
+  Platzhalter die Größe ändert.

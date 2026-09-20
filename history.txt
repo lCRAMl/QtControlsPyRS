@@ -1,0 +1,74 @@
+Zur Widget-Sammlung
+Ja, das geht — und du hast das Muster bereits im Haus: qt-splash liegt als eigenes Projekt unter Z:\Code\python\SplashScreenPython und ist mit pip install -e installiert. Genau so würde ich die Widgets verpacken:
+
+
+Z:\Code\python\QtControlsPython\
+├─ pyproject.toml          setuptools, src-Layout — wie bei qt-splash
+├─ README.md / CHANGELOG.md
+├─ src/qt_controls/
+│   ├─ __init__.py         exportiert alle Widgets
+│   ├─ glowbutton.py       (heute GenerateButton)
+│   ├─ toggleswitch.py
+│   ├─ statusbar.py
+│   └─ py.typed
+├─ examples/demo.py        alle Widgets in einem Fenster zum Ausprobieren
+└─ tests/                  pytest-qt, wie bei qt-splash
+Einmal pip install -e Z:\Code\python\QtControlsPython, danach in jedem Projekt:
+
+
+from qt_controls import GlowButton, AnimatedToggle, StatusBar
+Drei Punkte sprechen für diesen Weg:
+
+Eine Quelle. Durch -e wirkt jede Korrektur sofort in allen Projekten, ohne Kopieren.
+PyInstaller findet es von allein, weil es in site-packages liegt. Die drei Widgets bringen keine Bilddateien mit, es braucht also keine Zusatzeinträge in der .spec.
+Keine neuen Abhängigkeiten. Alle drei hängen nur an PyQt6, nichts Projektspezifisches steckt drin — ich habe das beim Schreiben schon so gehalten.
+Eine Sache würde ich beim Umzug ändern: GenerateButton heißt nach nichts Allgemeinem. In der Sammlung passt GlowButton oder BusyButton besser, mit GenerateButton als Alias, damit dein jetziger Code weiterläuft.
+
+Die Alternativen kurz: Git-Submodul gibt dir Versionsstände pro Projekt, ist aber im Alltag umständlich. Den Ordner kopieren heißt, dass die Fassungen früher oder später auseinanderlaufen. Auf PyPI veröffentlichen lohnt nur, wenn Fremde es nutzen sollen — und der Name qtwidgets ist dort schon vergeben.
+
+Der Button
+Ruhezustand ist jetzt das frühere Aktiv-Aussehen: abgerundete Fläche, Rahmen in der Akzentfarbe, Hover hellt auf, Druck dunkelt ab. Beim Start blenden die Beschriftungen über 320 ms ineinander — „Generate AI" zoomt 30 % heraus und verblasst, „Generating" zoomt von 70 % herein — und der blaue Rahmen wird zum Regenbogen: sieben Farben als waagrechtes Band, das per RepeatSpread nahtlos kachelt und in 2,6 s einmal durchläuft, darunter derselbe Verlauf breiter und halbtransparent als Leuchten. stop_busy() spielt alles rückwärts.
+
+Die Sammlung
+Sie liegt unter Z:\Code\python\QtControlsPython, nach dem Vorbild von qt-splash: src-Layout, pyproject.toml mit setuptools, py.typed, Demo und Tests.
+
+
+src/qt_controls/   __init__.py  glowbutton.py  toggleswitch.py  statusbar.py
+examples/demo.py   alle drei Widgets in einem Fenster
+tests/             17 Tests mit pytest-qt
+README.md  CHANGELOG.md  pyproject.toml  .gitignore
+Installiert ist sie bereits als qt-controls 0.1.0 mit pip install -e, Änderungen wirken also sofort in jedem Projekt:
+
+
+from qt_controls import AnimatedToggle, GlowButton, StatusBar
+GenerateButton bleibt als Alias auf GlowButton erhalten, falls du den alten Namen irgendwo stehen hast.
+
+Beim Herauslösen kam ein echter Mangel ans Licht: Die StatusBar richtete sich erst bei der ersten Fenstergrößen-Änderung aus. In deiner App fiel das nicht auf, weil MainWindow sie per singleShot angestoßen hat — als wiederverwendbares Widget wäre das eine Stolperfalle gewesen. Sie positioniert sich jetzt selbst (im Konstruktor, beim Anzeigen und sobald ihr Platzhalter sich ändert). Die Hilfszeile in der App konnte dadurch weg.
+
+APIImageGenerator importiert jetzt aus dem Paket, die drei Dateien in ui/ sind gelöscht — git führt sie als gelöscht, das kommt mit deinem nächsten Commit. ui/ behält flashtaskbar.py, prompt_editor.py und referencethumb.py.
+
+
+Die Sammlung heißt jetzt qt_controls_pyrs, Version 0.2.0:
+
+
+from qt_controls_pyrs import AnimatedToggle, GlowButton, ReferenceThumb, StatusBar, flash_taskbar
+Deine Ordner-Umbenennung nach QtControlsPyRS hatte die alte Installation ins Leere zeigen lassen — ich habe qt-controls deinstalliert und unter dem neuen Namen frisch eingerichtet.
+
+Die drei neuen Bausteine
+flash_taskbar hat einen Schutz für Nicht-Windows-Systeme bekommen (dort passiert nichts und der Aufruf meldet False), dazu eine einstellbare Blinkzahl und stop_flashing(). Dein Aufruf flash_taskbar(int(self.winId())) bleibt unverändert.
+
+ReferenceThumb hing an utility/imgbb.py — das ist mitgewandert und liegt jetzt als qt_controls_pyrs.imgbb offen (ImgBBClient, ImgBBUploadWorker, die Fehlerklassen). Dadurch hat das Paket eine zweite Abhängigkeit: requests. Das Widget selbst ist unverändert.
+
+PromptEditor brauchte am meisten Arbeit. Drei Dinge standen im Weg:
+
+Er war auf PySide6 geschrieben, der Rest der App auf PyQt6. Beide Bindungen sind bei dir installiert, deshalb lief es — zwei Qt-Bibliotheken in einem Prozess sind aber eine Quelle für schwer auffindbare Abstürze. Jetzt ist er durchgehend PyQt6.
+Er hing an highlight/prompt_highlighter.py. Der Highlighter steckt jetzt mit im selben Modul.
+Er erwartete ein Config-Objekt mit get_prompt_sections() — projektspezifisch und in einer Sammlung unbrauchbar. Die Abschnitte werden jetzt direkt übergeben: PromptEditor(["Motiv", "Stil"]), und reload_sections() heißt setSections().
+Das ist eine echte API-Änderung. Sie ist gefahrlos, weil das Widget in der App nirgends benutzt wurde — es war der einzige Teil, den dein Programm gar nicht importiert hat.
+
+In der App
+APIImageGenerator.py holt jetzt alles aus dem Paket. Gelöscht sind ui/referencethumb.py, ui/flashtaskbar.py, ui/prompt_editor.py und utility/imgbb.py; ui/ war danach leer und ist ebenfalls weg. In utility/ bleiben config.py, c2ps.py, loading_overlay.py, models_registry.py und resource_path.py.
+
+Übrig bleibt highlight/prompt_highlighter.py — es wird jetzt von nichts mehr importiert, da die portierte Fassung im Paket steckt. Soll ich den Ordner löschen?
+
+Getestet: 32 Tests im Paket (neu: 7 für ReferenceThumb mit einem echten Bild, 5 für den PromptEditor inklusive Sonderzeichen im Abschnittsnamen, 3 für flash_taskbar), die 6 App-Tests, die Demo und ein echter Start des Hauptfensters — alle sechs Miniaturen kommen jetzt aus dem Paket.
