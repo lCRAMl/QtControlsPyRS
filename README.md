@@ -7,6 +7,7 @@ Bedienelemente für PyQt6, die sich nach außen wie ihre Qt-Vorbilder verhalten.
 | `GlowButton` | `QPushButton` | Zeigt an, dass eine Aufgabe läuft: Beschriftung blendet über, Rahmen leuchtet in wandernden Regenbogenfarben |
 | `FrameButton` | `QPushButton` | Gibt unter der Maus seinen Schleier ab und fängt dafür einen feinen Rahmen ein, der von außen hereinfährt |
 | `DashBorderButton`, `SpreadButton`, `RaisedButton`, `ShineButton`, `HaloButton` | `QPushButton` | Fünf Knöpfe aus einer CSS-Sammlung, jeder mit einer eigenen Bewegung unter der Maus |
+| `FiberHaloButton` | `QPushButton` | Wie `HaloButton`, füllt sich während der laufenden Aufgabe mit ziehenden Farbflächen und schwingenden Fasern |
 | `AnimatedToggle` | `QCheckBox` | Schiebeschalter mit gleitendem Knopf |
 | `HeartCheckBox` | `QCheckBox` | Herz zum Anhaken: es füllt sich mit einem Hüpfer, sechs Funken stieben weg |
 | `StatusBar` | `QLabel` in einer Statuszeile | Klappt lange Meldungen kurz auf, ohne das Fenster zu verschieben |
@@ -45,6 +46,24 @@ pip install -e Z:\Code\python\QtControlsPyRS
 
 PyInstaller findet das Paket danach von allein — es enthält keine Bilddateien,
 also braucht die `.spec` keine Zusatzeinträge.
+
+## In eine bestehende Anwendung einbinden
+
+Die Widgets zeichnen sich selbst und holen ihre Farben aus der Palette. Wer in
+seiner Anwendung eine Palette setzt — üblich ist `app.setStyle("Fusion")` und
+ein `QPalette` gleich beim Start —, bekommt sie also ohne Zutun im Stil des
+Programms. Wichtig ist nur die Reihenfolge: erst die Palette setzen, dann die
+Fenster bauen.
+
+Ein Stylesheet (`setStyleSheet`) wirkt dagegen **nicht** auf sie. Das ist keine
+Lücke, sondern der Preis dafür, dass sie ihr Aussehen selbst in die Hand nehmen:
+Qt fragt bei einem selbstgezeichneten Widget keine QSS-Regeln ab. Was eine
+Anwendung im Stylesheet stehen hat, gehört für diese Widgets also in die Palette
+oder in eine eigene Unterklasse mit den passenden Konstanten.
+
+Wo ein Widget etwas auf Palettenfarben nicht abbilden kann — die Signalfarbe des
+`FiberHaloButton`, die Herzfarbe der `HeartCheckBox` —, gibt es einen Setter und
+eine Klassenkonstante dafür.
 
 ## Ausprobieren
 
@@ -203,6 +222,99 @@ samt Kurven, `UPPERCASE`, `WEIGHT_REST`/`WEIGHT_HOVER` und
 `SPACING_REST`/`SPACING_HOVER`. Dazu je Knopf die eigenen Werte, etwa `DASH`,
 `GAP` und `OFFSET` beim `DashBorderButton` oder `INNER_GLOW` und `OUTER_GLOW`
 beim `HaloButton`.
+
+## FiberHaloButton
+
+```python
+from qt_controls_pyrs import FiberHaloButton
+
+button = FiberHaloButton("Generate", busy_text="Generating")
+button.clicked.connect(start)
+
+def start():
+    # Der Klick blendet die Animation schon auf (AUTO_BUSY).
+    starte_aufgabe()
+
+def done():
+    button.stop_busy()
+```
+
+Der `HaloButton` mit Arbeitsanzeige: unter der Maus verhält er sich
+unverändert, nach dem Klick füllt sich seine ganze Fläche.
+
+Zuunterst liegt ein tiefer Ton der Grundfarbe. Darüber ziehen vier weiche
+Flächen in verschiedenen Nuancen davon durch den Knopf — jede in ihrem eigenen
+Tempo, teils von links, teils von rechts, dabei langsam auf und ab wandernd.
+Dazwischen blitzen drei helle Lichter auf, die an- und abschwellen. Ganz oben
+schwingen fünf dünne Glasfasern von Rand zu Rand: sie laufen an den Rändern aus,
+sind in der Mitte am weitesten ausgelenkt, haben je eigene Wellenlängen und
+driften abwechselnd in beide Richtungen; in jeder wandert ein Lichtpaket entlang.
+
+Ein voller Durchlauf dauert `CYCLE_MS` (9 Sekunden), und weil alle Bewegungen
+gegeneinander verschoben sind, wiederholt sich das Bild nie sichtbar. Beim Ein-
+und Ausblenden liegt ein kurzer Übergang, und die Bewegung hält erst an, wenn
+nichts mehr davon zu sehen ist. Der Halo-Strich und sein Schein liegen über der
+Animation, nicht darunter.
+
+Die Steuerung ist dieselbe wie beim `GlowButton`, ein Austausch ist also
+unauffällig:
+
+```python
+button.start_busy("Generating")   # Beschriftung wechselt mit
+button.stop_busy()
+button.is_busy()
+```
+
+Sperrt die Anwendung den Knopf, solange sie arbeitet (`setEnabled(False)`),
+bleibt die Animation trotzdem kräftig — gerade sie soll man ja sehen, während man
+wartet. Alles andere am Knopf blasst wie gewohnt ab.
+
+`AUTO_BUSY = True` heißt: ein Klick startet die Anzeige von allein, beendet wird
+sie von der Anwendung. Wer das nicht will, setzt die Konstante auf `False` und
+ruft `start_busy()` selbst auf. Die Beschriftung während der Arbeit ist
+freiwillig — ohne `busy_text` bleibt sie stehen. `sizeHint()` rechnet immer mit
+der breiteren der beiden Beschriftungen, damit der Knopf nicht springt, sobald
+die Aufgabe losläuft.
+
+### Farben ändern
+
+Im Ruhezustand kommen die Farben wie überall in dieser Sammlung aus der Palette:
+die Fläche aus `Button`, Schrift und Strich aus `ButtonText`. Ein Knopf in einer
+fremden Anwendung übernimmt deren Aussehen also von selbst, sobald dort eine
+Palette gesetzt ist.
+
+Die laufende Animation hat dagegen eine eigene Grundfarbe — sie soll auffallen
+und gerade nicht mit dem Rest verschwimmen. Aus ihr leitet sich alles ab: der
+tiefe Grund, die Nuancen der ziehenden Flächen, die Lichter und die äußeren
+Fasern. Gerechnet wird in HSV, verschoben werden Farbton, Sättigung und
+Helligkeit — ein Wechsel der Grundfarbe färbt deshalb das ganze Bild stimmig um,
+auf drei Wegen:
+
+```python
+# 1. für die ganze Anwendung, vor dem Erzeugen der Knöpfe
+FiberHaloButton.ACCENT = "#ffb703"
+
+# 2. für einen einzelnen Knopf, auch zur Laufzeit
+button.setAccentColor("#ffb703")
+button.setAccentColor(palette.color(QPalette.ColorRole.Highlight))
+
+# 3. dauerhaft in einer eigenen Klasse
+class ProjektButton(FiberHaloButton):
+    ACCENT = "#ffb703"
+    CYCLE_MS = 6000
+```
+
+Der dritte Weg ist der saubere, wenn eine Anwendung mehrere solcher Knöpfe hat:
+alle Abweichungen stehen an einer Stelle, und die Anwendung benutzt nur noch
+ihre eigene Klasse.
+
+Einstellbar sind außerdem `FIBERS` (Anzahl der Fasern), `SWING` (wie weit sie
+ausschlagen), `CYCLE_MS`, `FADE_MS` und `PACKET` (Länge des Lichtpakets). Das
+Bild selbst steht in drei Tabellen: `GROUND` ist der tiefe Grundton, `CLOUDS`
+beschreibt je Fläche Farbton-Versatz, Sättigung, Helligkeit, Deckkraft, Größe,
+Lage und Tempo, `SPARKS` dasselbe knapper für die Lichter. Wer das Bild
+umbauen will, ändert dort Zeilen, statt Zeichencode anzufassen. Alles vom
+`HaloButton` gilt weiter.
 
 ## HeartCheckBox
 

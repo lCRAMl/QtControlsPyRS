@@ -164,8 +164,13 @@ class _HoverButton(QPushButton):
         room = self._room()
         return QRectF(self.rect()).adjusted(room, room, -room, -room)
 
+    def _label_text(self) -> str:
+        """Was auf dem Knopf steht — Unterklassen dürfen das austauschen."""
+        return self.text()
+
     def _label(self) -> str:
-        return self.text().upper() if self.UPPERCASE else self.text()
+        text = self._label_text()
+        return text.upper() if self.UPPERCASE else text
 
     def _spacing(self, hover: float) -> float:
         return self.SPACING_REST + (self.SPACING_HOVER - self.SPACING_REST) * hover

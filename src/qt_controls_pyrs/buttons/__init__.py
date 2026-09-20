@@ -1,5 +1,6 @@
 """Knöpfe der Sammlung."""
 
+from .fiberhalobutton import FiberHaloButton
 from .framebutton import FrameButton
 from .glowbutton import GenerateButton, GlowButton
 from .hoverbuttons import (
@@ -8,6 +9,7 @@ from .hoverbuttons import (
 
 __all__ = [
     "DashBorderButton",
+    "FiberHaloButton",
     "FrameButton",
     "GenerateButton",
     "GlowButton",

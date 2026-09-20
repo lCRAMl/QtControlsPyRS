@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- `FiberHaloButton` aufgenommen: der `HaloButton` mit Arbeitsanzeige. Nach dem
+  Klick füllt sich die ganze Fläche — ein tiefer Grund, darüber ziehende
+  Farbflächen in Nuancen der Grundfarbe, aufblitzende Lichter und fünf
+  schwingende Glasfasern mit wandernden Lichtpaketen; ein Durchlauf dauert
+  9 Sekunden. Gesteuert wird er wie der `GlowButton` über `start_busy()` und
+  `stop_busy()`, ein Klick startet die Anzeige von allein. Die Grundfarbe der
+  Animation (`#5a8cff`) ist über `ACCENT` und `setAccentColor()` austauschbar
+  und färbt alle Nuancen mit um; der Rest kommt aus der Palette.
 - Fünf Knöpfe aus der CSS-Sammlung `.btn-1` … `.btn-5` aufgenommen:
   `DashBorderButton` (der Rahmen schnurrt zu einem Strich zusammen),
   `SpreadButton` (Sperrschrift mit wachsenden Strichen), `RaisedButton`

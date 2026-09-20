@@ -16,8 +16,9 @@ from PyQt6.QtWidgets import (
 )
 
 from qt_controls_pyrs import (
-    AnimatedToggle, DashBorderButton, FrameButton, GlowButton, HaloButton,
-    HeartCheckBox, RaisedButton, ReferenceThumb, ShineButton, SpreadButton, StatusBar
+    AnimatedToggle, DashBorderButton, FiberHaloButton, FrameButton, GlowButton,
+    HaloButton, HeartCheckBox, RaisedButton, ReferenceThumb, ShineButton,
+    SpreadButton, StatusBar
 )
 
 # Die fünf Knöpfe aus der CSS-Sammlung, jeder mit seiner eigenen Bewegung.
@@ -54,7 +55,7 @@ class Demo(QWidget):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("qt-controls-pyrs – Demo")
-        self.resize(620, 680)
+        self.resize(620, 760)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 12)
@@ -113,6 +114,15 @@ class Demo(QWidget):
         effects.setColumnStretch(len(EFFECT_BUTTONS), 1)
         layout.addLayout(effects)
 
+        # --- Halo-Knopf, der die laufende Arbeit anzeigt ---
+        fibers = QHBoxLayout()
+        self.fiber_button = FiberHaloButton("Generate", busy_text="Generating")
+        self.fiber_button.setMinimumWidth(240)
+        self.fiber_button.clicked.connect(self.run_fiber_task)
+        fibers.addWidget(self.fiber_button)
+        fibers.addStretch(1)
+        layout.addLayout(fibers)
+
         # --- Bild-Miniatur und Herz ---
         # Ohne Schlüssel bleibt es bei der Vorschau, hochgeladen wird nichts.
         row = QHBoxLayout()
@@ -155,6 +165,15 @@ class Demo(QWidget):
         self.button.stop_busy()
         self.button.setEnabled(True)
         self.status.setText(LONG_MESSAGE)
+
+    def run_fiber_task(self) -> None:
+        # Die Animation hat der Klick schon aufgeblendet (AUTO_BUSY).
+        self.status.setText("Aufgabe läuft, der Knopf zeigt es ...")
+        QTimer.singleShot(8000, self.finish_fiber_task)
+
+    def finish_fiber_task(self) -> None:
+        self.fiber_button.stop_busy()
+        self.status.setText("Aufgabe fertig")
 
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)

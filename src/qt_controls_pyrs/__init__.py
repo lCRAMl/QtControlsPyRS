@@ -10,6 +10,8 @@ Eigenständige Widgets und Helfer, die sich wie ihre Qt-Vorbilder verhalten:
 * :class:`DashBorderButton`, :class:`SpreadButton`, :class:`RaisedButton`,
   :class:`ShineButton`, :class:`HaloButton` – fünf Knöpfe aus einer
   CSS-Sammlung, jeder mit einer eigenen Bewegung unter der Maus.
+* :class:`FiberHaloButton` – wie :class:`HaloButton`, zeigt während einer
+  laufenden Aufgabe aber ziehende Farbflächen und schwingende Fasern.
 * :class:`AnimatedToggle` – Schiebeschalter als Ersatz für ``QCheckBox``.
 * :class:`HeartCheckBox` – Herz zum Anhaken, das sich mit einem Hüpfer
   füllt und Funken wegstieben lässt.
@@ -22,8 +24,8 @@ Eigenständige Widgets und Helfer, die sich wie ihre Qt-Vorbilder verhalten:
 """
 
 from .buttons import (
-    DashBorderButton, FrameButton, GenerateButton, GlowButton, HaloButton,
-    RaisedButton, ShineButton, SpreadButton
+    DashBorderButton, FiberHaloButton, FrameButton, GenerateButton, GlowButton,
+    HaloButton, RaisedButton, ShineButton, SpreadButton
 )
 from .checkboxes import AnimatedToggle, HeartCheckBox
 from .flashtaskbar import flash_taskbar, stop_flashing
@@ -42,6 +44,7 @@ __all__ = [
     "ClickableLabel",
     "CloseButton",
     "DashBorderButton",
+    "FiberHaloButton",
     "FrameButton",
     "GenerateButton",
     "GlowButton",
