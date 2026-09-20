@@ -6,6 +6,7 @@ Bedienelemente für PyQt6, die sich nach außen wie ihre Qt-Vorbilder verhalten.
 | --- | --- | --- |
 | `GlowButton` | `QPushButton` | Zeigt an, dass eine Aufgabe läuft: Beschriftung blendet über, Rahmen leuchtet in wandernden Regenbogenfarben |
 | `FrameButton` | `QPushButton` | Gibt unter der Maus seinen Schleier ab und fängt dafür einen feinen Rahmen ein, der von außen hereinfährt |
+| `DashBorderButton`, `SpreadButton`, `RaisedButton`, `ShineButton`, `HaloButton` | `QPushButton` | Fünf Knöpfe aus einer CSS-Sammlung, jeder mit einer eigenen Bewegung unter der Maus |
 | `AnimatedToggle` | `QCheckBox` | Schiebeschalter mit gleitendem Knopf |
 | `HeartCheckBox` | `QCheckBox` | Herz zum Anhaken: es füllt sich mit einem Hüpfer, sechs Funken stieben weg |
 | `StatusBar` | `QLabel` in einer Statuszeile | Klappt lange Meldungen kurz auf, ohne das Fenster zu verschieben |
@@ -25,7 +26,7 @@ Knöpfe und Kästchen liegen in eigenen Ordnern, weil es von beiden mehrere gibt
 
 ```
 qt_controls_pyrs/
-    buttons/      GlowButton, FrameButton
+    buttons/      GlowButton, FrameButton, die fünf aus hoverbuttons.py
     checkboxes/   AnimatedToggle, HeartCheckBox
     statusbar.py, referencethumb.py, imgbb.py, prompt_editor.py, flashtaskbar.py
 ```
@@ -51,7 +52,7 @@ also braucht die `.spec` keine Zusatzeinträge.
 python examples/demo.py
 ```
 
-Zeigt Schalter, Herz, beide Knöpfe, die Bild-Miniatur und die Statuszeile in
+Zeigt Schalter, Herz, alle Knöpfe, die Bild-Miniatur und die Statuszeile in
 einem Fenster, im Dunkelmodus. Mit gesetztem `IMGBB_API_KEY` lädt die Miniatur
 auch wirklich hoch, sonst bleibt es bei der Vorschau.
 
@@ -151,6 +152,57 @@ Grundlage ist `AnimatedToggle` aus dem Paket
 (MIT). Diese Fassung ist nach PyQt6 portiert, zeichnet zusätzlich die
 Beschriftung und nimmt die Farben aus der Palette. Den Puls-Ring der Vorlage
 gibt es hier nicht mehr.
+
+## Fünf Knöpfe aus einer CSS-Sammlung
+
+```python
+from qt_controls_pyrs import (
+    DashBorderButton, HaloButton, RaisedButton, ShineButton, SpreadButton
+)
+
+button = ShineButton("Hover me")
+button.clicked.connect(los)
+```
+
+Die `.btn-1` bis `.btn-5` einer bekannten CSS-Sammlung, jeder mit einer eigenen
+Bewegung unter der Maus:
+
+| Klasse | Vorlage | Unter der Maus |
+| --- | --- | --- |
+| `DashBorderButton` | `.btn-1` | Der geschlossene Rahmen schnurrt zu einem kurzen, dicken Strich zusammen, die Füllung verschwindet, die Schrift geht von hauchdünn auf fett |
+| `SpreadButton` | `.btn-2` | Die Schrift sperrt sich auf 5 Pixel, über und unter ihr wächst je ein feiner Strich aus der Mitte auf 70 % der Breite |
+| `RaisedButton` | `.btn-3` | Steht mit harter Kante und Schatten erhaben da und legt sich flach, die Schrift nimmt dabei die Farbe der Fläche an |
+| `ShineButton` | `.btn-4` | Ein schräger Lichtstreifen wischt einmal über die Fläche; der Rand schneidet ihn ab |
+| `HaloButton` | `.btn-5` | Der Strich um den Knopf wandert nach außen und verblasst, während der Knopf innen wie außen zu leuchten anfängt |
+
+Gemeinsam ist ihnen die Grundform `_HoverButton`: 45 Pixel hoch, Beschriftung in
+Großbuchstaben (`UPPERCASE = False` schaltet das ab) und ein Weg `hover` von 0
+nach 1, den die Maus vorwärts und beim Verlassen rückwärts laufen lässt. Hin-
+und Rückweg dürfen verschieden sein — `DashBorderButton` braucht hin 1350 ms mit
+weitem Ausschwingen und zurück 350 ms geradlinig, genau wie die Vorlage. Wer
+eine zweite, anders getaktete Bewegung braucht, meldet sie mit `_track()` an;
+`SpreadButton` macht das für seine Striche, die schneller sind als die Schrift.
+
+Auch hier kommen die Farben aus der Palette: die Fläche aus `Button`, alles
+Weiße der Vorlage aus `ButtonText`. Wo die Vorlage den Seitengrund durchscheinen
+lässt, zeichnet der Knopf schlicht nichts — dort steht das Elternteil. Damit
+sehen die fünf im Hell- wie im Dunkelmodus richtig aus, statt nur auf Rot.
+
+Zwei Stellen weichen bewusst ab:
+
+* `box-shadow` hat in Qt keine Entsprechung, weil beim Zeichnen kein
+  Weichzeichner zur Verfügung steht. Schatten und Schein entstehen hier aus
+  mehreren immer blasseren Strichen übereinander.
+* Was außerhalb der Fläche liegt — der Schatten von `RaisedButton`, der
+  auswandernde Strich von `HaloButton` — braucht Platz, denn ein Widget
+  zeichnet nicht über seinen Rand hinaus. Beide halten sich über `ROOM` einen
+  Rand frei, den `sizeHint()` mitrechnet.
+
+Einstellbar über Klassenkonstanten: `HEIGHT`, `PAD`, `ROOM`, `IN_MS`/`OUT_MS`
+samt Kurven, `UPPERCASE`, `WEIGHT_REST`/`WEIGHT_HOVER` und
+`SPACING_REST`/`SPACING_HOVER`. Dazu je Knopf die eigenen Werte, etwa `DASH`,
+`GAP` und `OFFSET` beim `DashBorderButton` oder `INNER_GLOW` und `OUTER_GLOW`
+beim `HaloButton`.
 
 ## HeartCheckBox
 

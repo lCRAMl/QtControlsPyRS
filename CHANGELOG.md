@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Fünf Knöpfe aus der CSS-Sammlung `.btn-1` … `.btn-5` aufgenommen:
+  `DashBorderButton` (der Rahmen schnurrt zu einem Strich zusammen),
+  `SpreadButton` (Sperrschrift mit wachsenden Strichen), `RaisedButton`
+  (erhaben und flach), `ShineButton` (Lichtstreifen) und `HaloButton`
+  (auswandernder Strich mit Schein). Sie teilen sich die Grundform
+  `_HoverButton` und stehen in der Demo nebeneinander.
 - `HeartCheckBox` aufgenommen: Herz zum Anhaken nach dem Muster
   "heart-container" von Uiverse.io. Das volle Herz springt beim Anhaken heraus
   und leuchtet kurz auf, sechs Funken stieben weg; abgehakt ist es sofort weg.

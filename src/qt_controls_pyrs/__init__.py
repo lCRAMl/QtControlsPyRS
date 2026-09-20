@@ -7,6 +7,9 @@ Eigenständige Widgets und Helfer, die sich wie ihre Qt-Vorbilder verhalten:
   leuchten lässt.
 * :class:`FrameButton` – Knopf, der unter der Maus seinen Schleier abgibt und
   einen feinen Rahmen von außen hereinfahren lässt.
+* :class:`DashBorderButton`, :class:`SpreadButton`, :class:`RaisedButton`,
+  :class:`ShineButton`, :class:`HaloButton` – fünf Knöpfe aus einer
+  CSS-Sammlung, jeder mit einer eigenen Bewegung unter der Maus.
 * :class:`AnimatedToggle` – Schiebeschalter als Ersatz für ``QCheckBox``.
 * :class:`HeartCheckBox` – Herz zum Anhaken, das sich mit einem Hüpfer
   füllt und Funken wegstieben lässt.
@@ -18,7 +21,10 @@ Eigenständige Widgets und Helfer, die sich wie ihre Qt-Vorbilder verhalten:
 * :func:`flash_taskbar` – lässt den Taskleisten-Eintrag blinken (Windows).
 """
 
-from .buttons import FrameButton, GenerateButton, GlowButton
+from .buttons import (
+    DashBorderButton, FrameButton, GenerateButton, GlowButton, HaloButton,
+    RaisedButton, ShineButton, SpreadButton
+)
 from .checkboxes import AnimatedToggle, HeartCheckBox
 from .flashtaskbar import flash_taskbar, stop_flashing
 from .imgbb import (
@@ -35,9 +41,11 @@ __all__ = [
     "AnimatedToggle",
     "ClickableLabel",
     "CloseButton",
+    "DashBorderButton",
     "FrameButton",
     "GenerateButton",
     "GlowButton",
+    "HaloButton",
     "HeartCheckBox",
     "ImgBBApiError",
     "ImgBBClient",
@@ -47,7 +55,10 @@ __all__ = [
     "ImgBBUploadWorker",
     "PromptEditor",
     "PromptHighlighter",
+    "RaisedButton",
     "ReferenceThumb",
+    "ShineButton",
+    "SpreadButton",
     "StatusBar",
     "UploadResult",
     "__version__",

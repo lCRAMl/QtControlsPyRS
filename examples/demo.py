@@ -11,11 +11,22 @@ import sys
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QColor, QFont, QPalette
 from PyQt6.QtWidgets import (
-    QApplication, QHBoxLayout, QSizePolicy, QStyleFactory, QVBoxLayout, QWidget
+    QApplication, QGridLayout, QHBoxLayout, QSizePolicy, QStyleFactory, QVBoxLayout,
+    QWidget
 )
 
 from qt_controls_pyrs import (
-    AnimatedToggle, FrameButton, GlowButton, HeartCheckBox, ReferenceThumb, StatusBar
+    AnimatedToggle, DashBorderButton, FrameButton, GlowButton, HaloButton,
+    HeartCheckBox, RaisedButton, ReferenceThumb, ShineButton, SpreadButton, StatusBar
+)
+
+# Die fünf Knöpfe aus der CSS-Sammlung, jeder mit seiner eigenen Bewegung.
+EFFECT_BUTTONS = (
+    (DashBorderButton, "Dash"),
+    (SpreadButton, "Spread"),
+    (RaisedButton, "Raised"),
+    (ShineButton, "Shine"),
+    (HaloButton, "Halo"),
 )
 
 LONG_MESSAGE = (
@@ -43,7 +54,7 @@ class Demo(QWidget):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("qt-controls-pyrs – Demo")
-        self.resize(560, 520)
+        self.resize(620, 680)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 12)
@@ -86,6 +97,21 @@ class Demo(QWidget):
         frames.addWidget(self.frame_button)
         frames.addStretch(1)
         layout.addLayout(frames)
+
+        # --- Fünf Knöpfe, fünf Bewegungen unter der Maus ---
+        effects = QGridLayout()
+        effects.setHorizontalSpacing(16)
+        effects.setVerticalSpacing(10)
+        self.effect_buttons = []
+        for number, (button_class, label) in enumerate(EFFECT_BUTTONS):
+            button = button_class(label)
+            button.clicked.connect(
+                lambda _, name=button_class.__name__: self.status.setText(f"{name} gedrückt")
+            )
+            effects.addWidget(button, number // 3, number % 3)
+            self.effect_buttons.append(button)
+        effects.setColumnStretch(len(EFFECT_BUTTONS), 1)
+        layout.addLayout(effects)
 
         # --- Bild-Miniatur und Herz ---
         # Ohne Schlüssel bleibt es bei der Vorschau, hochgeladen wird nichts.
