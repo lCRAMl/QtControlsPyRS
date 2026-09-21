@@ -9,6 +9,7 @@ Bedienelemente für PyQt6, die sich nach außen wie ihre Qt-Vorbilder verhalten.
 | `DashBorderButton`, `SpreadButton`, `RaisedButton`, `ShineButton`, `HaloButton` | `QPushButton` | Fünf Knöpfe aus einer CSS-Sammlung, jeder mit einer eigenen Bewegung unter der Maus |
 | `PulseHaloButton` | `QPushButton` | Wie `HaloButton`, lässt während der laufenden Aufgabe ruhig Striche aus dem Rahmen wandern |
 | `FiberHaloButton` | `QPushButton` | Dasselbe auffälliger: ziehende Farbflächen und schwingende Fasern füllen die ganze Fläche |
+| `HaloDropdown` | `QComboBox` | Auswahlfeld im Stil der Halo-Knöpfe; die Liste rollt weich auf, Buchstaben springen zum Eintrag |
 | `AnimatedToggle` | `QCheckBox` | Schiebeschalter mit gleitendem Knopf |
 | `HeartCheckBox` | `QCheckBox` | Herz zum Anhaken: es füllt sich mit einem Hüpfer, sechs Funken stieben weg |
 | `StatusBar` | `QLabel` in einer Statuszeile | Klappt lange Meldungen kurz auf, ohne das Fenster zu verschieben |
@@ -24,12 +25,14 @@ Abhängigkeiten: PyQt6, dazu `requests` — das braucht nur der ImgBB-Upload von
 
 ## Aufbau
 
-Knöpfe und Kästchen liegen in eigenen Ordnern, weil es von beiden mehrere gibt:
+Knöpfe, Kästchen und Auswahlfelder liegen in eigenen Ordnern, weil es von
+ihnen mehrere gibt oder geben wird:
 
 ```
 qt_controls_pyrs/
     buttons/      GlowButton, FrameButton, die fünf aus hoverbuttons.py
     checkboxes/   AnimatedToggle, HeartCheckBox
+    dropdowns/    HaloDropdown
     statusbar.py, referencethumb.py, imgbb.py, prompt_editor.py, flashtaskbar.py
 ```
 
@@ -149,6 +152,105 @@ Einstellbar über Klassenkonstanten: `RADIUS` (0 = eckig wie im CSS), `VEIL_A`
 und `VEIL_END` (Deckkraft und Endgröße des Schleiers), `RING_A`, `RING_W`,
 `RING_START` und `RING_ROOM` (Rahmen), `HOVER_MS`, `TINT_MS` und `TINT`
 (Aufhellung der Fläche, 100 = keine).
+
+## HaloDropdown
+
+```python
+from qt_controls_pyrs import HaloDropdown
+
+dropdown = HaloDropdown()
+dropdown.setPlaceholderText("Ordner wählen")
+dropdown.addItems(["Portraits", "Landschaft", "Produkte"])
+dropdown.setCurrentIndex(-1)                  # noch nichts gewählt
+dropdown.currentTextChanged.connect(ordner_gewählt)
+
+if dropdown.currentIndex() < 0:
+    dropdown.flash()                          # Rahmen blinkt rot
+```
+
+Eine `QComboBox` mit eigenem Aussehen: `addItem()`, `addItems()`, `clear()`,
+`currentText()`, `setCurrentIndex()`, `setPlaceholderText()` und die Signale
+`currentIndexChanged`, `currentTextChanged` und `activated` funktionieren
+unverändert, auch `isinstance(w, QComboBox)` bleibt wahr. Ein Austausch gegen
+eine vorhandene `QComboBox` ist also eine Zeile.
+
+### Die Leiste
+
+Sie sieht aus wie ein `PulseHaloButton` in Ruhe: ein feiner, halbdurchsichtiger
+Rahmen, innen nichts — dort steht der Hintergrund des Programms. Unter der Maus
+wird der Rahmen weiß und innen glimmt es auf, ohne den Strich, der beim Halo
+nach außen wandert. Rechts zeigt ein Pfeil nach unten; ist die Liste offen,
+dreht er sich in 200 ms nach links. Wechselt die Auswahl, blendet der alte Text
+aus und der neue ein. Solange nichts gewählt ist (`currentIndex() == -1`), steht
+der Platzhalter gedimmt da.
+
+Links und rechts hält sie denselben Rand frei wie die Halo-Knöpfe (`ROOM`),
+sodass Leiste und Knopf in einer Spalte bündig untereinander stehen.
+
+`flash()` lässt den Rahmen kurz rot blinken, dreimal in 600 ms — etwa, wenn
+noch eine Wahl fehlt. Auch ein gesperrtes Feld blinkt kräftig, gerade dann soll
+man es sehen. Ein Stylesheet wirkt auf das selbstgezeichnete Feld nicht; das
+ist der Ersatz dafür.
+
+### Die Liste
+
+Ein dunkles Feld in der Eingabefarbe des Programms (`Base`) mit demselben
+Rahmen. Beim Aufklappen rollt es von der Leiste aus auf (`UNFOLD_MS`, schnell
+los und weich aus); jeder Eintrag blendet ein und gleitet 8 Pixel nach
+(`SLIDE`, `ITEM_MS`), sobald die Kante ihn erreicht. Der Versatz ergibt sich
+aus der Kante, nicht aus einer Wartezeit je Eintrag — deshalb dauert es bei 3
+wie bei 10 Einträgen rund 250 ms. Klappt die Liste nach oben auf, läuft alles
+spiegelbildlich: die Kante wandert nach oben, der Eintrag an der Leiste kommt
+zuerst.
+
+Bewegt werden nur Lage, Deckkraft und die Kante — skaliert wird nichts. Das
+ist Absicht: Qt zeichnet Schrift bei jeder Zwischengröße neu, und die
+Buchstaben rasten dabei auf andere Pixel. Skalierte Schrift wirkt deshalb
+unruhig, verschobene nicht. Die Einträge verlassen dabei nie das Feld.
+
+Die Markierung gleitet von Eintrag zu Eintrag, statt zu springen — mit Maus,
+Pfeiltasten und Buchstaben. Lange Listen rollen mit dem Mausrad weich; ein
+schmaler Balken rechts zeigt, wo man ist. Nach einem Klick leuchtet der gewählte
+Eintrag kurz auf, dann blendet die ganze Liste in 150 ms aus und gleitet dabei
+ein paar Pixel zur Leiste zurück. Escape oder ein Klick daneben klappen sie ohne
+Änderung zu.
+
+### Buchstaben und Sortierung
+
+Ein Buchstabe springt zum ersten Eintrag, der damit beginnt — offen wie
+geschlossen. Derselbe Buchstabe noch einmal springt zum nächsten, schnell
+hintereinander getippt zählt der ganze Anfang: „sc" findet „Schatten", nicht
+das nächste „S…". Groß/Klein und Akzente zählen nicht, „a" findet auch
+„Äpfel". So verhalten sich Listen in Qt überall.
+
+`SORTED = True` sortiert die Einträge dazu deutsch: Ä bei A, ohne Groß/Klein,
+Zahlen nach ihrer Größe („Ordner 2" vor „Ordner 10"). Die Auswahl bleibt beim
+Sortieren am selben Eintrag. Ein Platzhalter-Eintrag wie „Bitte wählen" würde
+dabei mitsortiert — dafür gibt es `setPlaceholderText()`.
+
+### Einstellen
+
+Wie bei den Knöpfen über eine eigene Klasse, die alle Abweichungen an einer
+Stelle sammelt:
+
+```python
+class OrdnerAuswahl(HaloDropdown):
+    SORTED    = True
+    UNFOLD_MS = 200        # so lange rollt das Feld auf
+    ITEM_MS   = 160        # so lange gleitet ein Eintrag an seinen Platz
+    CLOSE_MS  = 150        # Zuklappen
+    RADIUS    = 8          # Ecken von Leiste und Liste
+    HIGHLIGHT = "#5a8cff"
+```
+
+Außerdem `SLIDE` (wie weit ein Eintrag gleitet). Der Feinschliff steht in
+`GLIDE_MS`, `SCROLL_MS`, `CONFIRM_MS`, `SWAP_MS` und `CLOSE_SLIDE`, das Blinken
+in `FLASH_COLOR`, `FLASH_MS` und `FLASH_COUNT`. Außerdem: `HEIGHT`,
+`ROOM`, `ROOM_Y`, `PAD`, `ALIGN`, `UPPERCASE`, `OUTLINE_ALPHA`, `INNER_GLOW`,
+`HOVER_MS`, `ARROW`, `ARROW_MS`, `ITEM_HEIGHT`, `LIST_PAD` und `GAP`.
+
+Nicht unterstützt ist `setEditable(True)` — dafür bräuchte es ein Eingabefeld
+in der Leiste.
 
 ## AnimatedToggle
 
@@ -272,6 +374,13 @@ bleibt die Anzeige trotzdem kräftig — gerade sie soll man ja sehen, während 
 wartet. Alles andere am Knopf blasst wie gewohnt ab. `sizeHint()` rechnet immer
 mit der breiteren der beiden Beschriftungen, damit der Knopf nicht springt,
 sobald die Aufgabe losläuft.
+
+Die Ecken rundet `RADIUS` ab (0 = eckig, die Voreinstellung). Er gilt für alle
+Halo-Knöpfe — `HaloButton`, `PulseHaloButton`, `FiberHaloButton` — und für
+alles, was sie zeichnen: der Rahmen, der nach außen wandernde Strich, die
+Striche der Arbeitsanzeige und die Faser-Animation, die in den abgerundeten
+Ecken bleibt. Nach außen wächst die Rundung mit, damit alle Striche parallel
+laufen.
 
 Einstellbar: `RINGS`, `RING_W` und `RING_ALPHA` (die wandernden Striche),
 `CYCLE_MS` (Dauer eines Durchlaufs, länger heißt ruhiger), `FADE_MS` (Ein- und

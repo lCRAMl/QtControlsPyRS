@@ -51,9 +51,17 @@ def _crisp(rect: QRectF, width: float) -> QRectF:
     return rect.adjusted(half, half, -half, -half)
 
 
+def _outline(painter: QPainter, rect: QRectF, radius: float = 0.0) -> None:
+    """Rechteck mit dem aktuellen Stift — ab einem Radius über 0 abgerundet."""
+    if radius > 0.0:
+        painter.drawRoundedRect(rect, radius, radius)
+    else:
+        painter.drawRect(rect)
+
+
 def _glow(
     painter: QPainter, rect: QRectF, color: QColor, spread: float,
-    inside: bool = False,
+    inside: bool = False, radius: float = 0.0,
 ) -> None:
     """Weicher Saum nach außen oder innen — der Ersatz für `box-shadow`.
 
@@ -72,7 +80,9 @@ def _glow(
         if box.width() <= 1 or box.height() <= 1:
             break
         painter.setPen(QPen(_faded(color, base * part * part), 1.6))
-        painter.drawRect(box)
+        # Mit dem Abstand wächst auch die Rundung, sonst liefen die Striche an
+        # den Ecken nicht parallel.
+        _outline(painter, box, max(radius + grow, 0.0) if radius > 0.0 else 0.0)
 
 
 class _HoverButton(QPushButton):
@@ -459,6 +469,7 @@ class HaloButton(_HoverButton):
     IN_CURVE  = _EXPO
     OUT_CURVE = _EXPO
 
+    RADIUS = 0           # Eckenradius — 0 ist eckig wie in der Vorlage
     OUTLINE_ALPHA = 0.5
     INNER_GLOW = 20
     OUTER_GLOW = 20
@@ -471,16 +482,19 @@ class HaloButton(_HoverButton):
 
     def _paint_surface(self, painter: QPainter, rect: QRectF, hover: float) -> None:
         ink = self._ink(hover)
+        radius = float(self.RADIUS)
 
         if hover < 1.0:
             # outline-offset wächst, outline-color verschwindet dabei
             out = self._room() * hover
             painter.setPen(QPen(_faded(ink, self.OUTLINE_ALPHA * (1.0 - hover)), 1.0))
-            painter.drawRect(rect.adjusted(-out, -out, out, out))
+            _outline(painter, rect.adjusted(-out, -out, out, out),
+                     radius + out if radius > 0.0 else 0.0)
 
         if hover > 0.0:
-            _glow(painter, rect, _faded(ink, 0.5 * hover), self.INNER_GLOW, inside=True)
+            _glow(painter, rect, _faded(ink, 0.5 * hover), self.INNER_GLOW,
+                  inside=True, radius=radius)
             _glow(painter, rect, _faded(ink, 0.2 * hover),
-                  min(self.OUTER_GLOW, self._room()))
+                  min(self.OUTER_GLOW, self._room()), radius=radius)
             painter.setPen(QPen(_faded(ink, hover), 1.0))
-            painter.drawRect(_crisp(rect, 1.0))
+            _outline(painter, _crisp(rect, 1.0), max(radius - 0.5, 0.0))

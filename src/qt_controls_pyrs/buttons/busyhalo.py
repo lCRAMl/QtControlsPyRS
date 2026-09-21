@@ -14,7 +14,7 @@ from PyQt6.QtCore import (
 )
 from PyQt6.QtGui import QColor, QFontMetricsF, QPainter, QPen
 
-from .hoverbuttons import HaloButton, _faded
+from .hoverbuttons import HaloButton, _faded, _outline
 
 
 def _clamp(value: float) -> float:
@@ -255,4 +255,6 @@ class PulseHaloButton(BusyHaloButton):
                 continue
             out = room * part
             painter.setPen(QPen(_faded(self._accent, alpha), self.RING_W))
-            painter.drawRect(rect.adjusted(-out, -out, out, out))
+            radius = float(self.RADIUS)
+            _outline(painter, rect.adjusted(-out, -out, out, out),
+                     radius + out if radius > 0.0 else 0.0)

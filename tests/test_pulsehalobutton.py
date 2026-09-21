@@ -117,3 +117,23 @@ def test_farbe_ist_austauschbar(qtbot, paint):
     button.busy_fade = 1.0
     button.phase = 0.5
     paint(button)
+
+
+def test_abgerundete_ecken(qtbot, paint):
+    class Rund(PulseHaloButton):
+        RADIUS = 10
+
+    button = Rund("Generate", busy_text="Generating")
+    button.resize(button.sizeHint())
+    qtbot.addWidget(button)
+    button.show()
+
+    # Ruhe, Hover und laufende Anzeige — ueberall dieselbe Rundung.
+    for hover in (0.0, 0.5, 1.0):
+        button.hover = hover
+        paint(button)
+    button.start_busy()
+    button.busy_fade = 1.0
+    for phase in (0.1, 0.5, 0.9):
+        button.phase = phase
+        paint(button)

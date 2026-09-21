@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+- `HaloDropdown` aufgenommen, in einem neuen Unterpaket `dropdowns`: ein
+  Auswahlfeld statt `QComboBox` im Stil der Halo-Knöpfe. Beim Aufklappen
+  rollt das Feld von der Leiste aus auf, und die Einträge gleiten nach,
+  sobald die Kante sie erreicht — rund 250 ms, unabhängig von der Länge der
+  Liste. Bewegt werden nur Lage und Deckkraft, nichts wird skaliert, damit
+  die Schrift ruhig bleibt. Nach einer Wahl leuchtet der Eintrag kurz auf, dann
+  blendet die Liste als Ganzes aus. Der Pfeil rechts dreht beim Öffnen von ↓
+  nach ←.
+- `HaloDropdown`: Buchstaben springen zum passenden Eintrag, offen wie
+  geschlossen, wiederholt durch alle mit diesem Buchstaben; `SORTED` sortiert
+  deutsch und natürlich. `flash()` lässt den Rahmen rot blinken, auch wenn
+  das Feld gesperrt ist. Die Markierung gleitet, lange Listen rollen weich,
+  der Text in der Leiste blendet bei einem Wechsel über, und
+  `setPlaceholderText()` wird gedimmt angezeigt.
+- `HaloButton`, `PulseHaloButton` und `FiberHaloButton`: die Ecken lassen sich
+  über `RADIUS` abrunden (Voreinstellung 0, also wie bisher). Rahmen,
+  wandernde Striche, Schein und die Faser-Animation folgen der Rundung.
 - `ReferenceThumb`: die Decke mit dem X blieb nach dem Dateidialog stehen, auch
   wenn der Zeiger längst woanders war. Qt schickt für den Weg über einen
   modalen Dialog kein Leave und meldet weiter `underMouse`; die Karte sieht nun

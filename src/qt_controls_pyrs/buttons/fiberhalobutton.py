@@ -214,6 +214,12 @@ class FiberHaloButton(BusyHaloButton):
     # ==============================
 
     def _paint_busy(self, painter: QPainter, rect: QRectF, ink: QColor) -> None:
-        painter.setClipRect(rect)
+        # Die Anzeige bleibt in der Fläche — mit abgerundeten Ecken auch dort.
+        if self.RADIUS > 0:
+            shape = QPainterPath()
+            shape.addRoundedRect(rect, self.RADIUS, self.RADIUS)
+            painter.setClipPath(shape)
+        else:
+            painter.setClipRect(rect)
         self._paint_ground(painter, rect)
         self._paint_fibers(painter, rect, ink)

@@ -21,9 +21,15 @@ from PyQt6.QtWidgets import (
 
 from qt_controls_pyrs import (
     AnimatedToggle, DashBorderButton, FiberHaloButton, FrameButton, GlowButton,
-    HaloButton, HeartCheckBox, PulseHaloButton, RaisedButton, ReferenceThumb,
-    ShineButton, SpreadButton, StatusBar
+    HaloButton, HaloDropdown, HeartCheckBox, PulseHaloButton, RaisedButton,
+    ReferenceThumb, ShineButton, SpreadButton, StatusBar
 )
+
+class FolderDropdown(HaloDropdown):
+    """Eigene Einstellungen gehören in eine Unterklasse — hier: sortiert."""
+
+    SORTED = True       # deutsch sortiert: Ä bei A, "Ordner 2" vor "Ordner 10"
+
 
 LONG_MESSAGE = (
     "Fehler: Unbekanntes Status-Antwortformat. Beispiel-Antwort: "
@@ -53,7 +59,7 @@ class Demo(QWidget):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("qt-controls-pyrs – Demo")
-        self.resize(720, 900)
+        self.resize(720, 970)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 12)
@@ -80,6 +86,21 @@ class Demo(QWidget):
         toggles.addWidget(self.retry_toggle)
 
         toggles.addStretch(1)
+
+        # ------------------------------------------------------------------
+        # HaloDropdown — Auswahlfeld statt QComboBox; beim Aufklappen rollt
+        # die Liste auf, die Einträge gleiten nach
+        # ------------------------------------------------------------------
+        # Ein Buchstabe springt zum passenden Eintrag, auch bei geschlossener
+        # Liste. Der Platzhalter steht da, solange nichts gewählt ist.
+        self.folder_dropdown = FolderDropdown()
+        self.folder_dropdown.setPlaceholderText("Ordner wählen")
+        self.folder_dropdown.addItems(
+            ["Tiere", "Portraits", "Architektur", "Landschaft", "Produkte"]
+        )
+        self.folder_dropdown.setCurrentIndex(-1)
+        self.folder_dropdown.currentTextChanged.connect(self.folder_changed)
+        layout.addWidget(self.folder_dropdown)
 
         # ------------------------------------------------------------------
         # GlowButton — zeigt mit Regenbogenrahmen, dass eine Aufgabe läuft
@@ -272,10 +293,23 @@ class Demo(QWidget):
         self.status.setText(f"Autoretry: {'an' if checked else 'aus'}")
 
     # ----------------------------------------------------------------------
+    # Handler: HaloDropdown
+    # ----------------------------------------------------------------------
+
+    def folder_changed(self, text: str) -> None:
+        self.status.setText(f"Ordner: {text}")
+
+    # ----------------------------------------------------------------------
     # Handler: GlowButton — Aufgabe starten und nach 6 Sekunden beenden
     # ----------------------------------------------------------------------
 
     def start_glow_task(self) -> None:
+        # Ohne Ordner geht es nicht los — der Rahmen des Dropdowns blinkt rot.
+        if self.folder_dropdown.currentIndex() < 0:
+            self.folder_dropdown.flash()
+            self.status.setText("Erst einen Ordner wählen")
+            return
+
         self.glow_button.setEnabled(False)
         self.glow_button.start_busy()
         self.status.setText("Aufgabe läuft ...")

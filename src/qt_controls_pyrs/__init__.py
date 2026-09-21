@@ -14,6 +14,8 @@ Eigenständige Widgets und Helfer, die sich wie ihre Qt-Vorbilder verhalten:
   laufenden Aufgabe aber Striche aus dem Rahmen wandern.
 * :class:`FiberHaloButton` – dasselbe auffälliger: ziehende Farbflächen
   und schwingende Fasern füllen die ganze Fläche.
+* :class:`HaloDropdown` – Auswahlfeld statt ``QComboBox`` im Stil der
+  Halo-Knöpfe; die Liste kommt beim Aufklappen aus der Tiefe herein.
 * :class:`AnimatedToggle` – Schiebeschalter als Ersatz für ``QCheckBox``.
 * :class:`HeartCheckBox` – Herz zum Anhaken, das sich mit einem Hüpfer
   füllt und Funken wegstieben lässt.
@@ -31,6 +33,7 @@ from .buttons import (
     ShineButton, SpreadButton
 )
 from .checkboxes import AnimatedToggle, HeartCheckBox
+from .dropdowns import HaloDropdown
 from .flashtaskbar import flash_taskbar, stop_flashing
 from .imgbb import (
     ImgBBApiError, ImgBBClient, ImgBBError, ImgBBFileNotFoundError,
@@ -55,6 +58,7 @@ __all__ = [
     "GenerateButton",
     "GlowButton",
     "HaloButton",
+    "HaloDropdown",
     "HeartCheckBox",
     "ImgBBApiError",
     "ImgBBClient",
@@ -63,8 +67,8 @@ __all__ = [
     "ImgBBNetworkError",
     "ImgBBUploadWorker",
     "PromptEditor",
-    "PulseHaloButton",
     "PromptHighlighter",
+    "PulseHaloButton",
     "RaisedButton",
     "ReferenceThumb",
     "ShineButton",

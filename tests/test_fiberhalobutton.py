@@ -182,3 +182,20 @@ def test_gesperrter_knopf_zeigt_die_leitung_trotzdem(qtbot, paint):
     button.setEnabled(False)
     assert button.is_busy()
     paint(button)
+
+
+def test_abgerundete_ecken(qtbot, paint):
+    class Rund(FiberHaloButton):
+        RADIUS = 12
+
+    button = Rund("Generate", busy_text="Generating")
+    button.resize(button.sizeHint())
+    qtbot.addWidget(button)
+    button.show()
+
+    button.start_busy()
+    button.busy_fade = 1.0
+    button.hover = 1.0
+    for phase in (0.0, 0.4, 0.8):
+        button.phase = phase
+        paint(button)
