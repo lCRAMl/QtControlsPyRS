@@ -53,7 +53,7 @@ class Demo(QWidget):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("qt-controls-pyrs – Demo")
-        self.resize(620, 900)
+        self.resize(720, 900)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 12)
@@ -178,28 +178,70 @@ class Demo(QWidget):
         fibers.addStretch(1)
 
         # ------------------------------------------------------------------
-        # ReferenceThumb — Bild-Miniatur mit Upload, und HeartCheckBox
+        # ReferenceThumb — sechs Bild-Miniaturen nebeneinander
+        #
+        # Alle sechs sind gleich aufgebaut und hängen an denselben drei
+        # Handlern; den `index` liefert jedes Signal mit. Nebeneinander sieht
+        # man, was eine einzelne nicht zeigt: fährt der Zeiger über eine von
+        # ihnen, leuchten alle mit — jede zu ihm hin.
         # ------------------------------------------------------------------
-        row = QHBoxLayout()
-        row.setSpacing(24)
-        layout.addLayout(row)
+        thumbs = QHBoxLayout()
+        thumbs.setSpacing(8)
+        layout.addLayout(thumbs)
 
         # Ohne Schlüssel bleibt es bei der Vorschau, hochgeladen wird nichts.
-        self.thumb = ReferenceThumb(
-            index=0,
-            imgbb_api_key=os.environ.get("IMGBB_API_KEY", ""),
-        )
-        self.thumb.uploaded.connect(self.thumb_uploaded)
-        self.thumb.upload_failed.connect(self.thumb_upload_failed)
-        self.thumb.cleared.connect(self.thumb_cleared)
-        row.addWidget(self.thumb)
+        imgbb_api_key = os.environ.get("IMGBB_API_KEY", "")
+
+        self.thumb_1 = ReferenceThumb(index=0, imgbb_api_key=imgbb_api_key)
+        self.thumb_1.uploaded.connect(self.thumb_uploaded)
+        self.thumb_1.upload_failed.connect(self.thumb_upload_failed)
+        self.thumb_1.cleared.connect(self.thumb_cleared)
+        thumbs.addWidget(self.thumb_1)
+
+        self.thumb_2 = ReferenceThumb(index=1, imgbb_api_key=imgbb_api_key)
+        self.thumb_2.uploaded.connect(self.thumb_uploaded)
+        self.thumb_2.upload_failed.connect(self.thumb_upload_failed)
+        self.thumb_2.cleared.connect(self.thumb_cleared)
+        thumbs.addWidget(self.thumb_2)
+
+        self.thumb_3 = ReferenceThumb(index=2, imgbb_api_key=imgbb_api_key)
+        self.thumb_3.uploaded.connect(self.thumb_uploaded)
+        self.thumb_3.upload_failed.connect(self.thumb_upload_failed)
+        self.thumb_3.cleared.connect(self.thumb_cleared)
+        thumbs.addWidget(self.thumb_3)
+
+        self.thumb_4 = ReferenceThumb(index=3, imgbb_api_key=imgbb_api_key)
+        self.thumb_4.uploaded.connect(self.thumb_uploaded)
+        self.thumb_4.upload_failed.connect(self.thumb_upload_failed)
+        self.thumb_4.cleared.connect(self.thumb_cleared)
+        thumbs.addWidget(self.thumb_4)
+
+        self.thumb_5 = ReferenceThumb(index=4, imgbb_api_key=imgbb_api_key)
+        self.thumb_5.uploaded.connect(self.thumb_uploaded)
+        self.thumb_5.upload_failed.connect(self.thumb_upload_failed)
+        self.thumb_5.cleared.connect(self.thumb_cleared)
+        thumbs.addWidget(self.thumb_5)
+
+        self.thumb_6 = ReferenceThumb(index=5, imgbb_api_key=imgbb_api_key)
+        self.thumb_6.uploaded.connect(self.thumb_uploaded)
+        self.thumb_6.upload_failed.connect(self.thumb_upload_failed)
+        self.thumb_6.cleared.connect(self.thumb_cleared)
+        thumbs.addWidget(self.thumb_6)
+
+        thumbs.addStretch(1)
+
+        # ------------------------------------------------------------------
+        # HeartCheckBox — Herz zum Anhaken statt QCheckBox
+        # ------------------------------------------------------------------
+        hearts = QHBoxLayout()
+        layout.addLayout(hearts)
 
         self.heart = HeartCheckBox()
         self.heart.setToolTip("Like")
         self.heart.toggled.connect(self.heart_toggled)
-        row.addWidget(self.heart, 0, Qt.AlignmentFlag.AlignVCenter)
+        hearts.addWidget(self.heart)
+        hearts.addStretch(1)
 
-        row.addStretch(1)
         layout.addStretch(1)
 
         # ------------------------------------------------------------------

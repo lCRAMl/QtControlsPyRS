@@ -173,6 +173,44 @@ def test_erfolgreicher_upload_merkt_sich_die_url(qtbot):
     assert thumb.progress.width() == ReferenceThumb.THUMB_SIZE
 
 
+def test_schein_haengt_an_der_kartengroesse(qtbot):
+    class GrossesThumb(ReferenceThumb):
+        THUMB_SIZE = 200
+        WIDGET_HEIGHT = 220
+
+    klein = make(qtbot)
+    gross = GrossesThumb(0, "")
+    qtbot.addWidget(gross)
+    gross.show()
+    qtbot.waitExposed(gross)
+
+    def radius(thumb) -> float:
+        return thumb._spotlight(thumb._card_rect(), thumb.GLOW_REACH, 1.0).radius()
+
+    # Doppelt so grosse Karte, doppelt so grosser Schein — keine festen Pixel.
+    assert radius(gross) == pytest.approx(2 * radius(klein), rel=0.02)
+
+    # Und GLOW_SPREAD stellt ihn ein.
+    vorher = radius(klein)
+    klein.GLOW_SPREAD = 2 * ReferenceThumb.GLOW_SPREAD
+    assert radius(klein) == pytest.approx(2 * vorher, rel=0.02)
+
+
+def test_schein_bleibt_auch_bei_winzigen_karten_gueltig(qtbot, paint):
+    class WinzigesThumb(ReferenceThumb):
+        THUMB_SIZE = 8
+        WIDGET_HEIGHT = 10
+
+    thumb = WinzigesThumb(0, "")
+    qtbot.addWidget(thumb)
+    thumb.show()
+
+    thumb.GLOW_SPREAD = 0.0          # Radius 0 waere fuer Qt ungueltig
+    assert thumb._spotlight(thumb._card_rect(), thumb.GLOW_REACH, 1.0).radius() > 0
+    thumb.glow = 1.0
+    paint(thumb)
+
+
 def test_leuchtfarbe_ist_austauschbar(qtbot, paint):
     thumb = make(qtbot)
 

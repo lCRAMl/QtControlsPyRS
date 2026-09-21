@@ -289,7 +289,8 @@ class ReferenceThumb(QWidget):
 
     # --- Style ---
     GLOW_COLOR = "#5a8cff"  # Farbe des Scheins
-    GLOW_REACH = 1.5        # Reichweite des Scheins, Vielfaches der Kartenseite
+    GLOW_SPREAD = 0.25      # Grundradius des Scheins, Anteil der Kartenseite
+    GLOW_REACH = 1.5        # Reichweite des Scheins, Vielfaches des Grundradius
     INNER_REACH = 3.0       # Reichweite des Scheins innen (nur wenn leer)
     INNER_ALPHA = 0.18
     RIM_ALPHA = 0.16        # ruhiger Rahmen, wenn der Zeiger weit weg ist
@@ -571,8 +572,16 @@ class ReferenceThumb(QWidget):
         return card.adjusted(shrink, shrink, -shrink, -shrink)
 
     def _spotlight(self, card: QRectF, reach: float, alpha: float) -> QRadialGradient:
-        """Der Schein, der dem Zeiger folgt."""
-        radius = max(card.width(), card.height()) * reach
+        """Der Schein, der dem Zeiger folgt.
+
+        Der Radius hängt an der Kartenseite, nicht an festen Pixeln: eine
+        doppelt so große Karte bekommt denselben Schein, nur doppelt so groß.
+        Wie weit er reicht, stellt `GLOW_SPREAD` ein — bei 0.25 und der
+        voreingestellten Kartenseite von 100 Pixeln sind das 25 Pixel
+        Grundradius, den `reach` je Schicht noch streckt.
+        """
+        side = max(card.width(), card.height())
+        radius = max(side * self.GLOW_SPREAD * reach, 1.0)
         gradient = QRadialGradient(self._light, radius)
         gradient.setColorAt(0.0, _faded(self._glow_color, alpha))
         gradient.setColorAt(1.0, _faded(self._glow_color, 0.0))

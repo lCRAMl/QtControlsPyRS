@@ -494,8 +494,24 @@ Die Leuchtfarbe ist `#5a8cff` und wie beim `FiberHaloButton` austauschbar —
 aus der Palette: die Kartenfläche aus `Base`, Pluszeichen und Rahmen aus
 `WindowText`.
 
+Wie weit der Schein reicht, sagt `GLOW_SPREAD`: ein Anteil der Kartenseite,
+keine feste Pixelzahl. Eine doppelt so große Miniatur bekommt damit denselben
+Schein, nur doppelt so groß. Bei der Voreinstellung 0.25 und der üblichen
+Kartenseite von 100 Pixeln sind das 25 Pixel Grundradius, den `GLOW_REACH`
+(Rahmen) und `INNER_REACH` (innen) noch strecken.
+
+Der Wert entscheidet auch darüber, wie viel man vom gemeinsamen Leuchten sieht:
+bei 0.25 bleibt der Schein in seiner eigenen Karte, ab etwa 0.75 fangen die
+direkten Nachbarinnen an mitzugehen, bei 1.5 zieht ein breiter Schein über
+mehrere Karten — das entspricht dem Vorbild im Netz.
+
+```python
+ReferenceThumb.GLOW_SPREAD = 0.75      # für alle, vor dem Erzeugen
+thumb.GLOW_SPREAD = 0.75               # nur für diese eine
+```
+
 Einstellbar: `THUMB_SIZE`, `WIDGET_HEIGHT`, `PROGRESS_HEIGHT`, `RADIUS`,
-`HOVER_SCALE`, `HOVER_MS`, `GLOW_MS`, `GLOW_REACH`, `INNER_REACH`,
+`HOVER_SCALE`, `HOVER_MS`, `GLOW_MS`, `GLOW_SPREAD`, `GLOW_REACH`, `INNER_REACH`,
 `INNER_ALPHA`, `RIM_ALPHA` und die Farben `_COLOR_PROGRESS`,
 `_COLOR_UPLOADING`, `_COLOR_ERROR`. An der Decke: `ThumbOverlay.DIM` und
 `FADE_MS`, am X `CloseButton.SIZE`, `SPIN_MS`, `SPIN_TURNS` und `DANGER`.

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- `ReferenceThumb`: wie weit der Schein reicht, hängt jetzt an der Kartenseite
+  statt an festen Pixeln — `GLOW_SPREAD` (Voreinstellung 0.25) gibt den
+  Grundradius als Anteil davon an. Eine größere Miniatur bekommt damit denselben
+  Schein, nur größer. Der Wert entscheidet auch, wie stark die Nachbarinnen
+  mitleuchten.
+- Die Demo zeigt sechs Miniaturen nebeneinander, weil man daran erst sieht, wie
+  der Schein über mehrere Karten wandert.
 - `PulseHaloButton` aufgenommen: der `HaloButton` mit einer zurückhaltenden
   Arbeitsanzeige. Aus dem Rahmen lösen sich Striche und wandern nach außen, die
   Fläche bleibt leer. Für Stellen, an denen eine Anzeige nötig ist, aber nichts
