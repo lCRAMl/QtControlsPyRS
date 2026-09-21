@@ -361,10 +361,9 @@ class ReferenceThumb(QWidget):
         )
         self._message = ""
         self.update()
-        # Steht die Maus schon darauf, deckt sie sich gleich auf — das X dreht
-        # sich dann direkt nach dem Laden aus.
-        if self.underMouse() or self.overlay.underMouse():
-            self.overlay.reveal()
+        # Steht die Maus wirklich darauf, deckt sie sich gleich auf — das X
+        # dreht sich dann direkt nach dem Laden aus.
+        self._sync_pointer()
         self._upload_to_imgbb(path)
 
     def clear(self) -> None:
@@ -414,6 +413,9 @@ class ReferenceThumb(QWidget):
         )
         if file:
             self.set_image(file)
+        # Während der Dialog offen war, hat Qt keine Maus-Ereignisse geschickt.
+        # Wo der Zeiger jetzt steht, muss die Karte selbst nachsehen.
+        self._sync_pointer()
 
     def _upload_to_imgbb(self, path: str) -> None:
         if not self.imgbb_api_key:
@@ -493,13 +495,40 @@ class ReferenceThumb(QWidget):
         anim.setEndValue(target)
         anim.start()
 
+    def _under_cursor(self) -> bool:
+        """Liegt die Karte an der Stelle, an der der Zeiger gerade steht?"""
+        return self.rect().contains(self.mapFromGlobal(QCursor.pos()))
+
     def _pointer_inside(self) -> bool:
-        """Steht der Zeiger auf der Karte — die Decke darüber zählt mit dazu?"""
+        """Steht der Zeiger auf der Karte — die Decke darüber zählt mit dazu?
+
+        Für den Weg von der Karte auf ihre eigene Decke: dort ist `underMouse`
+        noch nicht gesetzt, deshalb zählt auch die Lage.
+        """
         if self.underMouse() or self.overlay.underMouse():
             return True
-        # Beim Wechsel auf ein Kind ist `underMouse` noch nicht gesetzt, deshalb
-        # zusätzlich die Lage prüfen.
-        return self.rect().contains(self.mapFromGlobal(QCursor.pos()))
+        return self._under_cursor()
+
+    def _pointer_over(self) -> bool:
+        """Dasselbe, aber streng — beide Auskünfte müssen übereinstimmen.
+
+        `underMouse()` allein genügt nach einem Dateidialog nicht: es steht
+        weiter auf wahr, obwohl der Zeiger längst woanders ist. Qt schickt für
+        den Weg über einen modalen Dialog kein Leave, also wird zusätzlich
+        nachgesehen, wo der Zeiger wirklich steht.
+        """
+        return (self.underMouse() or self.overlay.underMouse()) and self._under_cursor()
+
+    def _sync_pointer(self) -> None:
+        """Den Zustand nachziehen, wenn Qt keine Maus-Ereignisse geschickt hat."""
+        if self._pointer_over():
+            self.pointer_entered()
+            return
+
+        self._animate(self._hover_anim, self._hover, 0.0)
+        self.overlay.conceal()
+        for thumb in self._family():
+            thumb._dim()
 
     def _family(self) -> list["ReferenceThumb"]:
         """Alle Miniaturen nebenan — sie leuchten gemeinsam auf."""

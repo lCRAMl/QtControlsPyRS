@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- `ReferenceThumb`: die Decke mit dem X blieb nach dem Dateidialog stehen, auch
+  wenn der Zeiger längst woanders war. Qt schickt für den Weg über einen
+  modalen Dialog kein Leave und meldet weiter `underMouse`; die Karte sieht nun
+  zusätzlich nach, wo der Zeiger wirklich steht, und zieht Decke, Schein und
+  Größe nach dem Dialog selbst nach — auch wenn er abgebrochen wurde.
 - `ReferenceThumb`: wie weit der Schein reicht, hängt jetzt an der Kartenseite
   statt an festen Pixeln — `GLOW_SPREAD` (Voreinstellung 0.25) gibt den
   Grundradius als Anteil davon an. Eine größere Miniatur bekommt damit denselben

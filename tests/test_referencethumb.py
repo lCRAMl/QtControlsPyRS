@@ -1,7 +1,7 @@
 import pytest
 from PyQt6.QtCore import QPointF
 from PyQt6.QtGui import QColor, QImage
-from PyQt6.QtWidgets import QHBoxLayout, QWidget
+from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QWidget
 
 from qt_controls_pyrs import ReferenceThumb
 
@@ -83,6 +83,52 @@ def test_das_x_dreht_sich_aus(qtbot, bilddatei):
         lambda: knopf.spin == 360.0 * knopf.SPIN_TURNS,
         timeout=3000,
     )
+
+
+def test_underMouse_allein_entscheidet_nicht(qtbot, monkeypatch):
+    """Der Fall aus der Anwendung: Bild waehlen, Dialog zu, Zeiger woanders.
+
+    Nach einem modalen Dialog meldet Qt weiter `underMouse`, obwohl der Zeiger
+    laengst woanders steht — ein Leave kommt dafuer nie. Deshalb fragt die Karte
+    zusaetzlich nach, wo der Zeiger wirklich ist.
+    """
+    thumb = make(qtbot)
+
+    monkeypatch.setattr(ReferenceThumb, "_under_cursor", lambda self: False)
+    assert not thumb._pointer_over()
+
+    # Fuer den Weg auf die eigene Decke bleibt die grosszuegige Pruefung.
+    monkeypatch.setattr(ReferenceThumb, "_under_cursor", lambda self: True)
+    assert thumb._pointer_inside()
+
+
+def test_sync_nimmt_decke_und_hover_zurueck(qtbot, paint, bilddatei, monkeypatch):
+    thumb = make(qtbot)
+    thumb.set_image(bilddatei)
+    thumb.pointer_entered()
+    assert thumb.overlay.isVisible()
+
+    monkeypatch.setattr(ReferenceThumb, "_under_cursor", lambda self: False)
+    thumb._sync_pointer()
+
+    # Beides laeuft zurueck: die Decke blendet aus, die Karte waechst wieder.
+    assert thumb.overlay._anim.endValue() == 0.0
+    assert thumb._hover_anim.endValue() == 0.0
+    assert thumb._glow_anim.endValue() == 0.0
+    paint(thumb)
+
+
+def test_abgebrochener_dialog_zieht_den_zustand_nach(qtbot, monkeypatch):
+    thumb = make(qtbot)
+    gerufen = []
+
+    monkeypatch.setattr(
+        QFileDialog, "getOpenFileName", staticmethod(lambda *a, **k: ("", ""))
+    )
+    monkeypatch.setattr(ReferenceThumb, "_sync_pointer", lambda self: gerufen.append(1))
+
+    thumb.load_image_dialog()
+    assert gerufen == [1], "auch nach einem Abbruch muss der Zustand stimmen"
 
 
 def test_licht_folgt_dem_zeiger(qtbot, paint):

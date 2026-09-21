@@ -508,7 +508,14 @@ mehrere Karten — das entspricht dem Vorbild im Netz.
 ```python
 ReferenceThumb.GLOW_SPREAD = 0.75      # für alle, vor dem Erzeugen
 thumb.GLOW_SPREAD = 0.75               # nur für diese eine
+
+class ReferenceCard(ReferenceThumb):   # dauerhaft für ein Projekt
+    GLOW_SPREAD = 0.75
+    GLOW_COLOR = "#5a8cff"
 ```
+
+`GLOW_COLOR` wird beim Erzeugen gelesen. Wer die Farbe später wechseln will,
+nimmt `setGlowColor()` — eine Zuweisung an die Konstante wirkt dann nicht mehr.
 
 Einstellbar: `THUMB_SIZE`, `WIDGET_HEIGHT`, `PROGRESS_HEIGHT`, `RADIUS`,
 `HOVER_SCALE`, `HOVER_MS`, `GLOW_MS`, `GLOW_SPREAD`, `GLOW_REACH`, `INNER_REACH`,
