@@ -16,6 +16,9 @@ Eigenständige Widgets und Helfer, die sich wie ihre Qt-Vorbilder verhalten:
   und schwingende Fasern füllen die ganze Fläche.
 * :class:`HaloDropdown` – Auswahlfeld statt ``QComboBox`` im Stil der
   Halo-Knöpfe; die Liste kommt beim Aufklappen aus der Tiefe herein.
+* :class:`HaloTabWidget` – Reiter statt ``QTabWidget``; beim Wechsel gleitet
+  ein Strich zum neuen Reiter, und der Inhalt schiebt sich seitlich hinaus,
+  während der nächste hereinkommt.
 * :class:`AnimatedToggle` – Schiebeschalter als Ersatz für ``QCheckBox``.
 * :class:`FrameToggle`, :class:`LineToggle`, :class:`HaloCheckBox` – Schalter im
   Halo-Stil: ein Rahmen mit gleitender Kugel, ein Strich mit laufender Kugel
@@ -49,6 +52,7 @@ from .referencethumb import (
     ClickableLabel, CloseButton, ReferenceThumb, ThumbOverlay
 )
 from .statusbar import StatusBar
+from .tabs import HaloTabWidget
 
 __version__ = "0.2.0"
 
@@ -66,6 +70,7 @@ __all__ = [
     "HaloButton",
     "HaloCheckBox",
     "HaloDropdown",
+    "HaloTabWidget",
     "HeartCheckBox",
     "ImgBBApiError",
     "ImgBBClient",

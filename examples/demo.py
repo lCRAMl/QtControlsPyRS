@@ -21,9 +21,9 @@ from PyQt6.QtWidgets import (
 
 from qt_controls_pyrs import (
     AnimatedToggle, DashBorderButton, FiberHaloButton, FrameButton, FrameToggle,
-    GlowButton, HaloButton, HaloCheckBox, HaloDropdown, HeartCheckBox,
-    LineToggle, PulseHaloButton, RaisedButton, ReferenceThumb, ShineButton,
-    SpreadButton, StatusBar
+    GlowButton, HaloButton, HaloCheckBox, HaloDropdown, HaloTabWidget,
+    HeartCheckBox, LineToggle, PromptEditor, PulseHaloButton, RaisedButton,
+    ReferenceThumb, ShineButton, SpreadButton, StatusBar
 )
 
 class FolderDropdown(HaloDropdown):
@@ -89,13 +89,45 @@ class Demo(QWidget):
         toggles.addStretch(1)
 
         # ------------------------------------------------------------------
+        # HaloTabWidget — Reiter statt QTabWidget; beim Wechsel gleitet ein
+        # Strich zum neuen Reiter, und der Inhalt schiebt sich seitlich
+        # hinaus, während der nächste hereinkommt
+        #
+        # Aufgeteilt wie später im APIImageGenerator: auf dem ersten Reiter
+        # die Einstellungen — die Halo-Schalter und das Dropdown aus den
+        # nächsten beiden Abschnitten —, auf dem zweiten das Prompt-Feld.
+        # ------------------------------------------------------------------
+        self.tabs = HaloTabWidget()
+        layout.addWidget(self.tabs)
+
+        # Erster Reiter: eine leere Seite mit eigenem Layout. Die nächsten
+        # beiden Abschnitte hängen ihre Widgets hier hinein statt ins Fenster.
+        settings_page = QWidget()
+        self.settings = QVBoxLayout(settings_page)
+        self.settings.setContentsMargins(0, 16, 0, 0)
+        self.settings.setSpacing(18)
+        self.tabs.addTab(settings_page, "Einstellungen")
+
+        # Zweiter Reiter: das Prompt-Feld füllt die ganze Seite.
+        prompt_page = QWidget()
+        prompt_layout = QVBoxLayout(prompt_page)
+        prompt_layout.setContentsMargins(0, 16, 0, 0)
+        self.prompt_editor = PromptEditor(["Motiv", "Stil", "Kamera"])
+        prompt_layout.addWidget(self.prompt_editor)
+        self.tabs.addTab(prompt_page, "Prompt")
+
+        # Erst jetzt verbinden: addTab() meldet den ersten Reiter schon als
+        # Wechsel, und die Statuszeile gibt es zu dem Zeitpunkt noch nicht.
+        self.tabs.currentChanged.connect(self.tab_changed)
+
+        # ------------------------------------------------------------------
         # Schalter im Halo-Stil — drei Formen, die zu den Halo-Knöpfen und
         # zum Dropdown passen: feine Linien, weiß unter der Maus, an in der
         # Signalfarbe
         # ------------------------------------------------------------------
         halo_toggles = QHBoxLayout()
         halo_toggles.setSpacing(24)
-        layout.addLayout(halo_toggles)
+        self.settings.addLayout(halo_toggles)       # auf dem ersten Reiter
 
         # FrameToggle: eine Kugel gleitet in einem feinen Rahmen
         self.frame_toggle = FrameToggle("Rahmen")
@@ -133,7 +165,8 @@ class Demo(QWidget):
         )
         self.folder_dropdown.setCurrentIndex(-1)
         self.folder_dropdown.currentTextChanged.connect(self.folder_changed)
-        layout.addWidget(self.folder_dropdown)
+        self.settings.addWidget(self.folder_dropdown)   # auf dem ersten Reiter
+        self.settings.addStretch(1)
 
         # ------------------------------------------------------------------
         # GlowButton — zeigt mit Regenbogenrahmen, dass eine Aufgabe läuft
@@ -324,6 +357,13 @@ class Demo(QWidget):
 
     def retry_toggled(self, checked: bool) -> None:
         self.status.setText(f"Autoretry: {'an' if checked else 'aus'}")
+
+    # ----------------------------------------------------------------------
+    # Handler: HaloTabWidget
+    # ----------------------------------------------------------------------
+
+    def tab_changed(self, index: int) -> None:
+        self.status.setText(f"Reiter: {self.tabs.tabText(index)}")
 
     # ----------------------------------------------------------------------
     # Handler: HaloDropdown

@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- `HaloTabWidget` aufgenommen, in einem neuen Unterpaket `tabs`: Reiter statt
+  `QTabWidget`. Die Reiter teilen sich die ganze Breite; unter dem aktiven
+  liegt ein dünner Strich in der Signalfarbe auf einer blassen Grundlinie.
+  Beim Wechsel gleitet der Strich hinüber, der ganze Inhalt schiebt sich
+  seitlich hinaus und wird unscharf, der nächste kommt scharf herein — auf
+  Federn wie bei animate-ui, umlenkbar mitten in der Bewegung. Die Höhe
+  bleibt fest. Einstellbar über `SLIDE_MS`, `LINE_MS`, `BLUR`, `ACCENT` und
+  weitere Konstanten.
+- Die Demo zeigt die Reiter wie später im APIImageGenerator: auf dem ersten
+  die Halo-Schalter und das Dropdown, auf dem zweiten ein `PromptEditor`.
+
 - Drei Schalter im Halo-Stil aufgenommen, passend zu den Halo-Knöpfen und
   zum `HaloDropdown`: `FrameToggle` (Rahmen mit gleitender Kugel),
   `LineToggle` (Strich mit laufender Kugel, der hinter ihr aufleuchtet) und

@@ -10,6 +10,7 @@ Bedienelemente für PyQt6, die sich nach außen wie ihre Qt-Vorbilder verhalten.
 | `PulseHaloButton` | `QPushButton` | Wie `HaloButton`, lässt während der laufenden Aufgabe ruhig Striche aus dem Rahmen wandern |
 | `FiberHaloButton` | `QPushButton` | Dasselbe auffälliger: ziehende Farbflächen und schwingende Fasern füllen die ganze Fläche |
 | `HaloDropdown` | `QComboBox` | Auswahlfeld im Stil der Halo-Knöpfe; die Liste rollt weich auf, Buchstaben springen zum Eintrag |
+| `HaloTabWidget` | `QTabWidget` | Reiter mit gleitendem Strich; beim Wechsel schiebt sich der Inhalt seitlich hinaus und der nächste herein |
 | `AnimatedToggle` | `QCheckBox` | Schiebeschalter mit gleitendem Knopf |
 | `FrameToggle`, `LineToggle`, `HaloCheckBox` | `QCheckBox` | Schalter im Halo-Stil: Rahmen mit gleitender Kugel, Strich mit laufender Kugel, Kästchen mit auslaufendem Strich |
 | `HeartCheckBox` | `QCheckBox` | Herz zum Anhaken: es füllt sich mit einem Hüpfer, sechs Funken stieben weg |
@@ -26,14 +27,15 @@ Abhängigkeiten: PyQt6, dazu `requests` — das braucht nur der ImgBB-Upload von
 
 ## Aufbau
 
-Knöpfe, Kästchen und Auswahlfelder liegen in eigenen Ordnern, weil es von
-ihnen mehrere gibt oder geben wird:
+Knöpfe, Kästchen, Auswahlfelder und Reiter liegen in eigenen Ordnern, weil es
+von ihnen mehrere gibt oder geben wird:
 
 ```
 qt_controls_pyrs/
     buttons/      GlowButton, FrameButton, die fünf aus hoverbuttons.py
     checkboxes/   AnimatedToggle, HeartCheckBox, FrameToggle, LineToggle, HaloCheckBox
     dropdowns/    HaloDropdown
+    tabs/         HaloTabWidget
     statusbar.py, referencethumb.py, imgbb.py, prompt_editor.py, flashtaskbar.py
 ```
 
@@ -76,8 +78,8 @@ eine Klassenkonstante dafür.
 python examples/demo.py
 ```
 
-Zeigt Schalter, Herz, alle Knöpfe, die Bild-Miniatur und die Statuszeile in
-einem Fenster, im Dunkelmodus. Mit gesetztem `IMGBB_API_KEY` lädt die Miniatur
+Zeigt Schalter, Reiter, Auswahlfeld, Herz, alle Knöpfe, die Bild-Miniatur und
+die Statuszeile in einem Fenster, im Dunkelmodus. Mit gesetztem `IMGBB_API_KEY` lädt die Miniatur
 auch wirklich hoch, sonst bleibt es bei der Vorschau.
 
 ## GlowButton
@@ -252,6 +254,75 @@ in `FLASH_COLOR`, `FLASH_MS` und `FLASH_COUNT`. Außerdem: `HEIGHT`,
 
 Nicht unterstützt ist `setEditable(True)` — dafür bräuchte es ein Eingabefeld
 in der Leiste.
+
+## HaloTabWidget
+
+```python
+from qt_controls_pyrs import HaloTabWidget
+
+tabs = HaloTabWidget()
+tabs.addTab(einstellungen, "Einstellungen")
+tabs.addTab(prompt_seite, "Prompt")
+tabs.currentChanged.connect(reiter_gewechselt)
+```
+
+Ein `QTabWidget` mit eigener Leiste und eigenem Übergang: `addTab()`,
+`insertTab()`, `removeTab()`, `setCurrentIndex()`, `currentWidget()`,
+`setTabText()`, `setTabEnabled()` und das Signal `currentChanged`
+funktionieren unverändert, auch `isinstance(w, QTabWidget)` bleibt wahr.
+`currentWidget()` ist sofort die neue Seite — das Gleiten ist nur die Anzeige.
+
+### Die Leiste
+
+Die Reiter teilen sich die ganze Breite, jeder bekommt gleich viel. Unter dem
+aktiven liegt ein dünner Strich in der Signalfarbe auf einer blassen
+Grundlinie, die über die ganze Breite läuft. Beim Wechsel gleitet der Strich
+hinüber, und die Beschriftungen blenden mit ihm um: der aktive Reiter steht
+weiß, die anderen gedimmt, und unter der Maus hellt ein inaktiver Reiter auf.
+Zu lange Namen werden mit „…" gekürzt.
+
+### Der Übergang
+
+Der ganze Inhalt schiebt sich zur Seite hinaus und wird dabei unscharf, der
+neue kommt von der anderen Seite herein und wird scharf. Liegt der neue Reiter
+rechts, wandert alles nach links, sonst spiegelbildlich. Inhalt und Strich
+laufen auf Federn wie im Vorbild [animate-ui](https://animate-ui.com/docs/primitives/animate/tabs):
+schnell los, weich aus, ohne sichtbares Nachschwingen; der Strich ist dabei
+etwas gemächlicher als der Inhalt. Wer mitten im Gleiten zurückklickt, lenkt
+die Bewegung mit dem Schwung von eben um. Ein dritter Reiter lässt den
+Zwischenstand als Ganzes hinausgleiten.
+
+Während des Gleitens liegt über dem Inhalt eine Decke mit zwei Aufnahmen: der
+alten Seite und der neuen. Die echten Seiten bewegen sich nicht. Das hält den
+Übergang ruckfrei, egal wie viel auf einer Seite steht, und die Unschärfe wird
+nur einmal berechnet. Zwei Folgen davon: Was sich in diesen gut 400 ms auf
+einer Seite ändert, sieht man erst danach, und Klicks auf den Inhalt kommen so
+lange nicht durch. Die Leiste bleibt bedienbar.
+
+Die Höhe ist fest: alle Seiten bekommen dieselbe Fläche, und nichts unterhalb
+des Widgets verschiebt sich beim Wechsel. Wird der Reiter gesetzt, bevor das
+Widget zu sehen ist — etwa beim Einlesen der zuletzt gewählten Seite —, steht
+er sofort da, ohne Gleiten.
+
+### Einstellen
+
+```python
+class Reiter(HaloTabWidget):
+    ACCENT   = "#5a8cff"   # Farbe des Strichs
+    SLIDE_MS = 430         # so lange gleitet der Inhalt (0 = sofort)
+    LINE_MS  = 550         # so lange gleitet der Strich
+    BLUR     = 8           # Unschärfe der gleitenden Seiten (0 = keine)
+```
+
+Außerdem `HEIGHT` (Höhe der Leiste), `PAD`, `LINE` (Dicke des Strichs),
+`BASE_ALPHA` (Grundlinie), `IDLE_ALPHA` und `HOVER_ALPHA` (Beschriftung der
+inaktiven Reiter) und `HOVER_MS`. `setAccentColor()` ändert die Farbe für ein
+einzelnes Widget.
+
+Nicht unterstützt: Reiter an der Seite oder unten, Symbole, Schließknöpfe und
+verschiebbare Reiter — die Leiste zeichnet nur ihre Beschriftungen. Den
+Dokumentmodus schaltet das Widget selbst ein; ohne ihn käme der Qt-Rahmen um
+die Seiten zurück.
 
 ## AnimatedToggle
 
