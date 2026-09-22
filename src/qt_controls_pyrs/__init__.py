@@ -17,6 +17,9 @@ Eigenständige Widgets und Helfer, die sich wie ihre Qt-Vorbilder verhalten:
 * :class:`HaloDropdown` – Auswahlfeld statt ``QComboBox`` im Stil der
   Halo-Knöpfe; die Liste kommt beim Aufklappen aus der Tiefe herein.
 * :class:`AnimatedToggle` – Schiebeschalter als Ersatz für ``QCheckBox``.
+* :class:`FrameToggle`, :class:`LineToggle`, :class:`HaloCheckBox` – Schalter im
+  Halo-Stil: ein Rahmen mit gleitender Kugel, ein Strich mit laufender Kugel
+  und ein Kästchen, aus dem beim Anhaken ein Strich nach außen läuft.
 * :class:`HeartCheckBox` – Herz zum Anhaken, das sich mit einem Hüpfer
   füllt und Funken wegstieben lässt.
 * :class:`StatusBar` – Statuszeile, die lange Meldungen kurz aufklappt, ohne
@@ -32,7 +35,9 @@ from .buttons import (
     GenerateButton, GlowButton, HaloButton, PulseHaloButton, RaisedButton,
     ShineButton, SpreadButton
 )
-from .checkboxes import AnimatedToggle, HeartCheckBox
+from .checkboxes import (
+    AnimatedToggle, FrameToggle, HaloCheckBox, HeartCheckBox, LineToggle
+)
 from .dropdowns import HaloDropdown
 from .flashtaskbar import flash_taskbar, stop_flashing
 from .imgbb import (
@@ -55,9 +60,11 @@ __all__ = [
     "DashBorderButton",
     "FiberHaloButton",
     "FrameButton",
+    "FrameToggle",
     "GenerateButton",
     "GlowButton",
     "HaloButton",
+    "HaloCheckBox",
     "HaloDropdown",
     "HeartCheckBox",
     "ImgBBApiError",
@@ -66,6 +73,7 @@ __all__ = [
     "ImgBBFileNotFoundError",
     "ImgBBNetworkError",
     "ImgBBUploadWorker",
+    "LineToggle",
     "PromptEditor",
     "PromptHighlighter",
     "PulseHaloButton",

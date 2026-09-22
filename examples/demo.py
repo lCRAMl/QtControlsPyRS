@@ -20,9 +20,10 @@ from PyQt6.QtWidgets import (
 )
 
 from qt_controls_pyrs import (
-    AnimatedToggle, DashBorderButton, FiberHaloButton, FrameButton, GlowButton,
-    HaloButton, HaloDropdown, HeartCheckBox, PulseHaloButton, RaisedButton,
-    ReferenceThumb, ShineButton, SpreadButton, StatusBar
+    AnimatedToggle, DashBorderButton, FiberHaloButton, FrameButton, FrameToggle,
+    GlowButton, HaloButton, HaloCheckBox, HaloDropdown, HeartCheckBox,
+    LineToggle, PulseHaloButton, RaisedButton, ReferenceThumb, ShineButton,
+    SpreadButton, StatusBar
 )
 
 class FolderDropdown(HaloDropdown):
@@ -59,7 +60,7 @@ class Demo(QWidget):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("qt-controls-pyrs – Demo")
-        self.resize(720, 970)
+        self.resize(720, 1020)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 12)
@@ -86,6 +87,38 @@ class Demo(QWidget):
         toggles.addWidget(self.retry_toggle)
 
         toggles.addStretch(1)
+
+        # ------------------------------------------------------------------
+        # Schalter im Halo-Stil — drei Formen, die zu den Halo-Knöpfen und
+        # zum Dropdown passen: feine Linien, weiß unter der Maus, an in der
+        # Signalfarbe
+        # ------------------------------------------------------------------
+        halo_toggles = QHBoxLayout()
+        halo_toggles.setSpacing(24)
+        layout.addLayout(halo_toggles)
+
+        # FrameToggle: eine Kugel gleitet in einem feinen Rahmen
+        self.frame_toggle = FrameToggle("Rahmen")
+        self.frame_toggle.toggled.connect(
+            lambda on: self.status.setText(f"FrameToggle: {'an' if on else 'aus'}")
+        )
+        halo_toggles.addWidget(self.frame_toggle)
+
+        # LineToggle: eine Kugel läuft auf einem Strich, der hinter ihr leuchtet
+        self.line_toggle = LineToggle("Linie")
+        self.line_toggle.toggled.connect(
+            lambda on: self.status.setText(f"LineToggle: {'an' if on else 'aus'}")
+        )
+        halo_toggles.addWidget(self.line_toggle)
+
+        # HaloCheckBox: füllt sich, und einmal läuft ein Strich nach außen
+        self.halo_checkbox = HaloCheckBox("Kästchen")
+        self.halo_checkbox.toggled.connect(
+            lambda on: self.status.setText(f"HaloCheckBox: {'an' if on else 'aus'}")
+        )
+        halo_toggles.addWidget(self.halo_checkbox)
+
+        halo_toggles.addStretch(1)
 
         # ------------------------------------------------------------------
         # HaloDropdown — Auswahlfeld statt QComboBox; beim Aufklappen rollt

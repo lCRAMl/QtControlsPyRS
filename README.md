@@ -11,6 +11,7 @@ Bedienelemente für PyQt6, die sich nach außen wie ihre Qt-Vorbilder verhalten.
 | `FiberHaloButton` | `QPushButton` | Dasselbe auffälliger: ziehende Farbflächen und schwingende Fasern füllen die ganze Fläche |
 | `HaloDropdown` | `QComboBox` | Auswahlfeld im Stil der Halo-Knöpfe; die Liste rollt weich auf, Buchstaben springen zum Eintrag |
 | `AnimatedToggle` | `QCheckBox` | Schiebeschalter mit gleitendem Knopf |
+| `FrameToggle`, `LineToggle`, `HaloCheckBox` | `QCheckBox` | Schalter im Halo-Stil: Rahmen mit gleitender Kugel, Strich mit laufender Kugel, Kästchen mit auslaufendem Strich |
 | `HeartCheckBox` | `QCheckBox` | Herz zum Anhaken: es füllt sich mit einem Hüpfer, sechs Funken stieben weg |
 | `StatusBar` | `QLabel` in einer Statuszeile | Klappt lange Meldungen kurz auf, ohne das Fenster zu verschieben |
 | `ReferenceThumb` | — | Bild-Miniatur als Karte, deren Rahmen dem Mauszeiger nachleuchtet; lädt die Datei zu ImgBB hoch und zeigt den Fortschritt |
@@ -31,7 +32,7 @@ ihnen mehrere gibt oder geben wird:
 ```
 qt_controls_pyrs/
     buttons/      GlowButton, FrameButton, die fünf aus hoverbuttons.py
-    checkboxes/   AnimatedToggle, HeartCheckBox
+    checkboxes/   AnimatedToggle, HeartCheckBox, FrameToggle, LineToggle, HaloCheckBox
     dropdowns/    HaloDropdown
     statusbar.py, referencethumb.py, imgbb.py, prompt_editor.py, flashtaskbar.py
 ```
@@ -481,6 +482,45 @@ beschreibt je Fläche Farbton-Versatz, Sättigung, Helligkeit, Deckkraft, Größ
 Lage und Tempo, `SPARKS` dasselbe knapper für die Lichter. Wer das Bild
 umbauen will, ändert dort Zeilen, statt Zeichencode anzufassen. Alles vom
 `HaloButton` gilt weiter.
+
+## Schalter im Halo-Stil
+
+```python
+from qt_controls_pyrs import FrameToggle, HaloCheckBox, LineToggle
+
+toggle = FrameToggle("Autoretry")
+toggle.setChecked(True)
+toggle.toggled.connect(speichern)
+```
+
+Drei Schalter, die zu den Halo-Knöpfen und zum `HaloDropdown` passen: feine
+Linien, innen leer, weiß unter der Maus, und eingeschaltet ein Kern in der
+Signalfarbe mit weichem Schein. Alle drei bleiben eine `QCheckBox` —
+`isChecked()`, `setChecked()` und `toggled` funktionieren unverändert, ein
+Klick auf die Beschriftung schaltet ebenfalls um. Man wählt die Form, indem man
+die Klasse wählt:
+
+| Klasse | Aus | An |
+| --- | --- | --- |
+| `FrameToggle` | ein feiner Rahmen, links ein hohler Ring — die Dropdown-Leiste im Kleinen | der Ring gleitet nach rechts und füllt sich, innen glimmt der Rahmen blau |
+| `LineToggle` | ein Strich so fein wie ein Knopfrahmen, links ein hohler Ring | der Ring läuft nach rechts, füllt sich und bekommt einen Schein; der Strich hinter ihm leuchtet mit |
+| `HaloCheckBox` | ein leeres Kästchen | innen füllt sich ein Kern, und einmal läuft ein Strich aus dem Rahmen nach außen — die Bewegung des HaloButton |
+
+Beim Abhaken läuft alles zurück; beim Kästchen blendet der Kern nur aus, nach
+außen läuft dann nichts.
+
+Gemeinsam einstellbar: `RADIUS` (Rahmen und Kästchen, 0 = eckig), `ACCENT`
+bzw. `setAccentColor()` für die Farbe des Kerns, `OUTLINE_ALPHA`, `SLIDE_MS`,
+`HOVER_MS` und `GAP`. Dazu je Form: `TRACK_W`, `TRACK_H`, `KNOB_PAD` und
+`INNER_GLOW` beim Rahmen, `TRACK_W` und `BALL` bei der Linie, `BOX`, `ROOM`,
+`FILL_PAD` und `BURST_MS` beim Kästchen. Wie bei den Knöpfen gehören eigene
+Werte in eine Unterklasse:
+
+```python
+class OptionToggle(FrameToggle):
+    RADIUS = 0
+    ACCENT = "#5a8cff"
+```
 
 ## HeartCheckBox
 

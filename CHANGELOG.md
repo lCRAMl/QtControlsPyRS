@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Drei Schalter im Halo-Stil aufgenommen, passend zu den Halo-Knöpfen und
+  zum `HaloDropdown`: `FrameToggle` (Rahmen mit gleitender Kugel),
+  `LineToggle` (Strich mit laufender Kugel, der hinter ihr aufleuchtet) und
+  `HaloCheckBox` (Kästchen, aus dem beim Anhaken einmal ein Strich nach außen
+  läuft). Alle drei bleiben eine `QCheckBox`, folgen `RADIUS` und haben ihre
+  Signalfarbe in `ACCENT`. Der klassische `AnimatedToggle` bleibt erhalten.
 - `HaloDropdown` aufgenommen, in einem neuen Unterpaket `dropdowns`: ein
   Auswahlfeld statt `QComboBox` im Stil der Halo-Knöpfe. Beim Aufklappen
   rollt das Feld von der Leiste aus auf, und die Einträge gleiten nach,

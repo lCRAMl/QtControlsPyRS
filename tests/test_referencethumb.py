@@ -268,6 +268,28 @@ def test_leuchtfarbe_ist_austauschbar(qtbot, paint):
     paint(thumb)
 
 
+def test_eckenradius_ist_einstellbar(qtbot, paint, bilddatei):
+    class Rund(ReferenceThumb):
+        RADIUS = 14
+
+    class Eckig(ReferenceThumb):
+        RADIUS = 0
+
+    for cls in (Rund, Eckig):
+        thumb = cls(0, "")
+        qtbot.addWidget(thumb)
+        thumb.show()
+
+        # Auch die Decke mit dem X folgt der Rundung der Karte.
+        assert thumb.overlay.RADIUS == cls.RADIUS
+
+        thumb.glow = 1.0
+        paint(thumb)
+        thumb.set_image(bilddatei)
+        thumb.pointer_entered()
+        paint(thumb)
+
+
 def test_karte_schrumpft_unter_der_maus(qtbot, paint):
     thumb = make(qtbot)
 
