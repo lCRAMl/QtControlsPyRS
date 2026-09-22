@@ -124,12 +124,18 @@ class HaloTabWidget(QTabWidget):
 
     Die Höhe ist fest: alle Seiten bekommen dieselbe Fläche.
 
+    `ROOM` rückt Leiste und Gleiten links und rechts ein, so wie der Rand der
+    Halo-Knöpfe: steht das Widget in einer Spalte mit ihnen, enden Grundlinie
+    und gleitender Inhalt genau an ihrem Rahmen. Die Seiten selbst bekommen
+    weiter die ganze Breite — ein HaloDropdown darauf hält seinen Rand selbst.
+
     Nicht unterstützt: Reiter an der Seite oder unten, Symbole, Schließknöpfe
     und verschiebbare Reiter — die Leiste zeichnet nur ihre Beschriftungen.
     """
 
     # --- Leiste ---
     HEIGHT      = 36          # Höhe der Reiterleiste
+    ROOM        = 0           # Rand links und rechts von Leiste und Gleiten (Halo-Knöpfe: 16)
     PAD         = 16          # Abstand der Beschriftung zum Rand des Reiters
     LINE        = 2           # Dicke des Strichs unter dem aktiven Reiter
     ACCENT      = "#5a8cff"   # Farbe des Strichs
@@ -206,12 +212,48 @@ class HaloTabWidget(QTabWidget):
 
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
+        self._place_bar()
         # Die Aufnahmen passen nicht mehr — gleich ans Ziel.
         self._curtain.stop()
 
     def hideEvent(self, event) -> None:
         super().hideEvent(event)
         self._curtain.stop()
+
+    # Qt legt die Leiste bei jeder dieser Gelegenheiten wieder über die ganze
+    # Breite; danach wird sie jeweils um ROOM eingerückt.
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        self._place_bar()
+
+    def changeEvent(self, event) -> None:
+        super().changeEvent(event)
+        self._place_bar()
+
+    def event(self, event) -> bool:
+        handled = super().event(event)
+        if event.type() == QEvent.Type.LayoutRequest:
+            self._place_bar()
+        return handled
+
+    def tabInserted(self, index: int) -> None:
+        super().tabInserted(index)
+        self._place_bar()
+
+    def tabRemoved(self, index: int) -> None:
+        super().tabRemoved(index)
+        self._place_bar()
+
+    def _place_bar(self) -> None:
+        """Die Leiste um ROOM eingerückt, damit sie bündig mit den Halo-Knöpfen endet."""
+        room = max(0, self.ROOM)
+        if room == 0:
+            return
+        bar = self.tabBar()
+        now = bar.geometry()
+        wanted = QRect(room, now.y(), max(0, self.width() - 2 * room), now.height())
+        if now != wanted:
+            bar.setGeometry(wanted)
 
 
 class _SlideCurtain(QWidget):
@@ -334,6 +376,13 @@ class _SlideCurtain(QWidget):
             return
         painter = QPainter(self)
         width = self.width()
+        room = max(0, self._tabs.ROOM)
+        if room > 0:
+            # Der Inhalt verschwindet genau am Rand, nicht erst am Widgetrand.
+            background = self._tabs.palette().color(QPalette.ColorRole.Window)
+            painter.fillRect(0, 0, room, self.height(), background)
+            painter.fillRect(width - room, 0, room, self.height(), background)
+            painter.setClipRect(room, 0, max(0, width - 2 * room), self.height())
         # Vorwärts wandert alles nach links: die alte Seite hinaus, die neue
         # von rechts herein. Rückwärts spiegelbildlich.
         side = -1.0 if self._forward else 1.0

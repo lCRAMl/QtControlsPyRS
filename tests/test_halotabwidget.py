@@ -308,3 +308,47 @@ def test_feder(damping):
     spring.aim(position, 0.0, velocity, 400)
     assert spring.state(0) == pytest.approx((position, velocity))
     assert spring.state(400)[0] == pytest.approx(0.0, abs=0.01)
+
+
+def test_rand_wie_die_halo_knoepfe(qtbot, paint):
+    class Eingerueckt(HaloTabWidget):
+        ROOM = 16
+
+    tabs = make(qtbot, cls=Eingerueckt)
+    bar = tabs.tabBar()
+
+    def inset() -> bool:
+        return bar.x() == 16 and bar.width() == tabs.width() - 32
+
+    # Qt legt die Leiste bei vielen Gelegenheiten neu an — sie bleibt eingerückt.
+    assert inset()
+    tabs.resize(500, 300)
+    assert inset()
+    tabs.addTab(page("Verlauf"), "Verlauf")
+    qtbot.waitUntil(inset, timeout=1000)
+    tabs.setTabText(2, "Ein deutlich längerer Name")
+    qtbot.wait(20)
+    qtbot.waitUntil(inset, timeout=1000)
+    tabs.removeTab(2)
+    qtbot.waitUntil(inset, timeout=1000)
+    widths = [bar.tabRect(i).width() for i in range(bar.count())]
+    assert sum(widths) == bar.width()
+
+    # Die Seiten behalten die ganze Breite.
+    assert tabs.currentWidget().width() == tabs.width()
+
+    # Beim Gleiten bleibt der Rand leer: dort steht nur der Hintergrund.
+    tabs.setCurrentIndex(1)
+    curtain = tabs._curtain
+    qtbot.waitUntil(lambda: 0.3 < curtain.value() < 0.7, timeout=1000)
+    image = paint(curtain).toImage()
+    background = tabs.palette().color(tabs.backgroundRole())
+    width, height = curtain.width(), curtain.height()
+
+    def colors(columns) -> set:
+        return {image.pixelColor(x, y).rgb() for x in columns for y in range(height)}
+
+    assert colors(list(range(16)) + list(range(width - 16, width))) == {background.rgb()}
+    # Gleich daneben gleitet wirklich etwas — sonst wäre „leer" nichts wert.
+    assert len(colors(range(16, 40))) > 1
+    settle(qtbot, tabs)

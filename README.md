@@ -319,6 +319,13 @@ Außerdem `HEIGHT` (Höhe der Leiste), `PAD`, `LINE` (Dicke des Strichs),
 inaktiven Reiter) und `HOVER_MS`. `setAccentColor()` ändert die Farbe für ein
 einzelnes Widget.
 
+`ROOM` rückt Leiste und Gleiten links und rechts ein (Voreinstellung 0). Steht
+das Widget in einer Spalte mit Halo-Knöpfen, setzt man es auf deren Rand —
+`ROOM = HaloButton.ROOM` —, dann enden Grundlinie und gleitender Inhalt genau
+an ihrem Rahmen. Die Seiten selbst behalten die ganze Breite: ein
+`HaloDropdown` darauf hält seinen Rand selbst frei, alles andere bekommt ihn
+als Rand im Layout der Seite.
+
 Nicht unterstützt: Reiter an der Seite oder unten, Symbole, Schließknöpfe und
 verschiebbare Reiter — die Leiste zeichnet nur ihre Beschriftungen. Den
 Dokumentmodus schaltet das Widget selbst ein; ohne ihn käme der Qt-Rahmen um

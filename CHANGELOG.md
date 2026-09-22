@@ -9,7 +9,9 @@
   seitlich hinaus und wird unscharf, der nächste kommt scharf herein — auf
   Federn wie bei animate-ui, umlenkbar mitten in der Bewegung. Die Höhe
   bleibt fest. Einstellbar über `SLIDE_MS`, `LINE_MS`, `BLUR`, `ACCENT` und
-  weitere Konstanten.
+  weitere Konstanten. `ROOM` rückt Leiste und Gleiten ein, damit sie bündig mit
+  den Halo-Knöpfen darunter enden; der Inhalt verschwindet beim Gleiten dann
+  genau an dieser Kante.
 - Die Demo zeigt die Reiter wie später im APIImageGenerator: auf dem ersten
   die Halo-Schalter und das Dropdown, auf dem zweiten ein `PromptEditor`.
 
