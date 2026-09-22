@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- `ReferenceThumb`: Ein Klick auf die Decke über einem geladenen Bild öffnete
+  den Dateidialog zweimal — nach dem ersten Bild erschien sofort wieder ein
+  Dialog. Die Decke nahm den Klick nicht an, und Qt reicht einen nicht
+  angenommenen Mausklick an das Elternwidget weiter: erst meldete ihn die
+  Decke, dann sah ihn die Karte darunter noch einmal. Sie nimmt Drücken und
+  Loslassen jetzt an.
+- `ReferenceThumb`: Wo der Dateidialog aufgeht, lässt sich festlegen —
+  `ReferenceThumb(..., start_dir=pfad)` oder `setStartDir()`. Ohne Angabe
+  bleibt es wie bisher bei dem Ordner, den Qt zuletzt gezeigt hat.
+
 - `HaloTabWidget` aufgenommen, in einem neuen Unterpaket `tabs`: Reiter statt
   `QTabWidget`. Die Reiter teilen sich die ganze Breite; unter dem aktiven
   liegt ein dünner Strich in der Signalfarbe auf einer blassen Grundlinie.

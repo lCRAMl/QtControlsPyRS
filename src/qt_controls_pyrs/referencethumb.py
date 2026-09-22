@@ -234,10 +234,17 @@ class ThumbOverlay(QWidget):
         if thumb is not None:
             thumb.pointer_left()
 
+    def mousePressEvent(self, event) -> None:
+        # Angenommen — und nicht an die Karte darunter weitergereicht. Qt gibt
+        # einen Mausklick, den ein Widget nicht annimmt, an das Elternwidget
+        # weiter; die Karte sähe ihn sonst ebenfalls und öffnete den
+        # Dateidialog gleich ein zweites Mal.
+        event.accept()
+
     def mouseReleaseEvent(self, event) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit()
-        super().mouseReleaseEvent(event)
+        event.accept()
 
     def paintEvent(self, event) -> None:
         if self._fade <= 0.0:
@@ -298,13 +305,17 @@ class ReferenceThumb(QWidget):
     _COLOR_UPLOADING = "#00bfff"
     _COLOR_ERROR = "#ff0000"
 
-    def __init__(self, index: int, imgbb_api_key: str, parent: QWidget | None = None) -> None:
+    def __init__(
+        self, index: int, imgbb_api_key: str, parent: QWidget | None = None,
+        start_dir: str = "",
+    ) -> None:
         self._hover = 0.0
         self._glow = 0.0
         super().__init__(parent)
 
         self.index = index
         self.imgbb_api_key = imgbb_api_key
+        self._start_dir = str(start_dir)
         self.upload_url: str | None = None
 
         self._worker: ImgBBUploadWorker | None = None
@@ -395,6 +406,14 @@ class ReferenceThumb(QWidget):
         self.progress.setGeometry(0, self.THUMB_SIZE, width, self.PROGRESS_HEIGHT)
         self.progress.setStyleSheet(f"background-color:{color};")
 
+    def start_dir(self) -> str:
+        """Der Ordner, den der Dateidialog zuerst zeigt."""
+        return self._start_dir
+
+    def setStartDir(self, path) -> None:
+        """Legt fest, wo der Dateidialog aufgeht. Leer heißt: wie Qt es zuletzt hielt."""
+        self._start_dir = str(path)
+
     def glow_color(self) -> QColor:
         return QColor(self._glow_color)
 
@@ -409,7 +428,7 @@ class ReferenceThumb(QWidget):
 
     def load_image_dialog(self) -> None:
         file, _ = QFileDialog.getOpenFileName(
-            self, "Bild auswählen", "", "Images (*.png *.jpg *.jpeg)"
+            self, "Bild auswählen", self._start_dir, "Images (*.png *.jpg *.jpeg)"
         )
         if file:
             self.set_image(file)

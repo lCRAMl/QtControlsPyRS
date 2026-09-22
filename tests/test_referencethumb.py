@@ -1,5 +1,5 @@
 import pytest
-from PyQt6.QtCore import QPointF
+from PyQt6.QtCore import QPoint, QPointF, Qt
 from PyQt6.QtGui import QColor, QImage
 from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QWidget
 
@@ -300,3 +300,60 @@ def test_karte_schrumpft_unter_der_maus(qtbot, paint):
     assert unter_maus.width() < ruhe.width()
     assert unter_maus.center() == ruhe.center()
     paint(thumb)
+
+
+def dialoge_zaehlen(monkeypatch, antwort: str = "") -> list:
+    """Zählt die Aufrufe des Dateidialogs und merkt sich den Startordner."""
+    aufrufe: list = []
+
+    def dialog(parent, titel, start="", filter="", *rest):
+        aufrufe.append(start)
+        return (antwort, "")
+
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", staticmethod(dialog))
+    return aufrufe
+
+
+def test_ein_klick_oeffnet_genau_einen_dialog(qtbot, monkeypatch, bilddatei):
+    """Die Decke liegt über der Karte. Nimmt sie den Klick nicht an, reicht Qt
+    ihn an die Karte weiter — und der Dialog ginge zweimal auf."""
+    thumb = make(qtbot)
+    aufrufe = dialoge_zaehlen(monkeypatch)
+
+    # Ohne Bild: Klick auf die Karte
+    qtbot.mouseClick(thumb, Qt.MouseButton.LeftButton, pos=QPoint(12, 12))
+    assert len(aufrufe) == 1
+
+    # Mit Bild liegt die Decke darüber — ein Klick neben das X tauscht das Bild.
+    thumb.set_image(bilddatei)
+    thumb.overlay.reveal()
+    neben_dem_x = QPoint(12, 12)
+    assert not thumb.overlay.button.geometry().contains(neben_dem_x)
+    qtbot.mouseClick(thumb.overlay, Qt.MouseButton.LeftButton, pos=neben_dem_x)
+    assert len(aufrufe) == 2, "ein Klick auf die Decke, ein Dialog"
+
+    # Das X selbst leert die Karte und öffnet keinen Dialog: der Knopf nimmt
+    # den Klick an, also bekommt ihn die Decke darunter gar nicht erst.
+    qtbot.mouseClick(thumb.overlay.button, Qt.MouseButton.LeftButton)
+    assert len(aufrufe) == 2
+    assert not thumb.has_image()
+
+
+def test_startordner_des_dialogs(qtbot, monkeypatch, tmp_path):
+    thumb = make(qtbot)
+    aufrufe = dialoge_zaehlen(monkeypatch)
+
+    # Ohne Angabe bleibt es bei dem, was Qt zuletzt gezeigt hat.
+    thumb.load_image_dialog()
+    assert aufrufe == [""]
+
+    thumb.setStartDir(tmp_path)
+    assert thumb.start_dir() == str(tmp_path)
+    thumb.load_image_dialog()
+    assert aufrufe[-1] == str(tmp_path)
+
+    # Auch gleich beim Erzeugen
+    mit_ordner = ReferenceThumb(0, "", start_dir=str(tmp_path))
+    qtbot.addWidget(mit_ordner)
+    mit_ordner.load_image_dialog()
+    assert aufrufe[-1] == str(tmp_path)

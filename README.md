@@ -681,13 +681,16 @@ Einstellbar: `LINE_HEIGHT`, `MAX_LINES`, `HOLD_MS`, `ANIM_MS`.
 ```python
 from qt_controls_pyrs import ReferenceThumb
 
-thumb = ReferenceThumb(index=0, imgbb_api_key=key)
+thumb = ReferenceThumb(index=0, imgbb_api_key=key, start_dir=archiv_pfad)
 thumb.uploaded.connect(lambda i, url: merken(i, url))
 thumb.upload_failed.connect(lambda i, fehler: melden(fehler))
 thumb.cleared.connect(vergessen)
+
+thumb.setStartDir(anderer_pfad)        # auch zur Laufzeit
 ```
 
-Ein Klick öffnet den Dateidialog, danach läuft der Upload im Hintergrund
+Ein Klick öffnet den Dateidialog — mit `start_dir` bzw. `setStartDir()` gleich
+in einem bestimmten Ordner, sonst dort, wo Qt zuletzt war —, danach läuft der Upload im Hintergrund
 (`ImgBBUploadWorker`, eigener Thread) und ein schmaler Balken unter dem Bild
 zeigt den Fortschritt: blau während des Hochladens, grün bei Erfolg, rot bei
 einem Fehler. Ohne Schlüssel bleibt es bei der reinen Vorschau — es wird nichts
