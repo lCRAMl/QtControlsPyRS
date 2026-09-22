@@ -507,7 +507,11 @@ die Klasse wählt:
 | `HaloCheckBox` | ein leeres Kästchen | innen füllt sich ein Kern, und einmal läuft ein Strich aus dem Rahmen nach außen — die Bewegung des HaloButton |
 
 Beim Abhaken läuft alles zurück; beim Kästchen blendet der Kern nur aus, nach
-außen läuft dann nichts.
+außen läuft dann nichts. Wird der Zustand gesetzt, bevor der Schalter zu sehen
+ist — etwa beim Einlesen gespeicherter Einstellungen —, steht er sofort
+richtig, ohne Animation. Die `HaloCheckBox` hält links Platz für ihren Strich
+frei und mit Beschriftung rechts denselben, damit sie in einem mittigen Layout
+auch wirklich mittig steht.
 
 Gemeinsam einstellbar: `RADIUS` (Rahmen und Kästchen, 0 = eckig), `ACCENT`
 bzw. `setAccentColor()` für die Farbe des Kerns, `OUTLINE_ALPHA`, `SLIDE_MS`,

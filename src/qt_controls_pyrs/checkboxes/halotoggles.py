@@ -105,7 +105,15 @@ class _HaloToggle(QCheckBox):
         self.update()
 
     def _on_toggled(self, checked: bool) -> None:
-        self._run(self._slide, self._position, 1.0 if checked else 0.0)
+        target = 1.0 if checked else 0.0
+        if not self.isVisible():
+            # Noch nicht zu sehen — etwa beim Einlesen gespeicherter
+            # Einstellungen: gleich richtig stehen, nichts animieren.
+            self._slide.stop()
+            self._position = target
+            self.update()
+            return
+        self._run(self._slide, self._position, target)
 
     # ==============================
     # Maus
@@ -325,12 +333,22 @@ class HaloCheckBox(_HaloToggle):
 
     def _on_toggled(self, checked: bool) -> None:
         super()._on_toggled(checked)
-        # Nur beim Anhaken — beim Abhaken soll nichts nach außen laufen.
-        if checked:
+        # Nur beim Anhaken, und nur wenn es jemand sieht — beim Abhaken oder
+        # beim Einlesen gespeicherter Einstellungen läuft nichts nach außen.
+        if checked and self.isVisible():
             self._run(self._burst_anim, 0.0, 1.0)
 
     def _indicator_size(self) -> QSizeF:
         return QSizeF(self.BOX + 2 * self.ROOM, self.BOX + 2 * self.ROOM)
+
+    def sizeHint(self) -> QSize:
+        # Links hält das Kästchen Platz für den Strich frei. Mit Beschriftung
+        # bleibt rechts derselbe Rand, damit es in einem mittigen Layout auch
+        # wirklich mittig steht.
+        hint = super().sizeHint()
+        if self.text():
+            hint.setWidth(hint.width() + self.ROOM)
+        return hint
 
     def _paint_indicator(self, painter: QPainter, rect: QRectF) -> None:
         on = _clamp(self._position)

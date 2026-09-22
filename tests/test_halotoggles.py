@@ -80,11 +80,21 @@ def test_platz_fuer_die_beschriftung(qtbot, cls):
 
 
 @pytest.mark.parametrize("cls", ALLE)
-def test_eingeschaltet_gestartet_steht_er_gleich_richtig(qtbot, cls):
+def test_gespeicherter_zustand_steht_ohne_animation(qtbot, paint, cls):
+    """Wie beim Programmstart: erst erzeugen, dann die Einstellung setzen."""
     toggle = cls("An")
-    toggle.setChecked(True)
     qtbot.addWidget(toggle)
-    qtbot.waitUntil(lambda: toggle.position == 1.0, timeout=2000)
+    toggle.setChecked(True)
+
+    # Sofort richtig — ohne Gleiten und beim Kästchen ohne Strich nach außen.
+    assert toggle.position == 1.0
+    assert toggle._slide.state() != toggle._slide.State.Running
+    if isinstance(toggle, HaloCheckBox):
+        assert toggle.burst == 1.0
+
+    toggle.show()
+    qtbot.waitExposed(toggle)
+    paint(toggle)
 
 
 @pytest.mark.parametrize("cls", ALLE)
@@ -117,6 +127,16 @@ def test_kaestchen_schickt_nur_beim_anhaken_einen_strich_hinaus(qtbot, paint):
     box.setChecked(False)
     qtbot.wait(100)
     assert box.burst == 1.0, "beim Abhaken läuft nichts nach außen"
+
+
+def test_kaestchen_mit_text_steht_mittig(qtbot):
+    ohne = make(qtbot, HaloCheckBox, "")
+    mit = make(qtbot, HaloCheckBox, "Autoretry")
+
+    text = mit.fontMetrics().horizontalAdvance("Autoretry")
+    rand = HaloCheckBox.ROOM
+    # Links der Rand für den Strich, rechts nach dem Text derselbe.
+    assert mit.sizeHint().width() == ohne.sizeHint().width() + HaloCheckBox.GAP + text + rand
 
 
 def test_der_strich_bleibt_im_widget(qtbot):
