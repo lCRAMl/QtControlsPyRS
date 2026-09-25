@@ -16,6 +16,8 @@ Eigenständige Widgets und Helfer, die sich wie ihre Qt-Vorbilder verhalten:
   und schwingende Fasern füllen die ganze Fläche.
 * :class:`HaloDropdown` – Auswahlfeld statt ``QComboBox`` im Stil der
   Halo-Knöpfe; die Liste kommt beim Aufklappen aus der Tiefe herein.
+* :class:`HaloPromptBox` – mehrzeilige Eingabe im Halo-Stil, die sich über
+  den Inhalt darunter ausfahren lässt.
 * :class:`HaloTabWidget` – Reiter statt ``QTabWidget``; beim Wechsel gleitet
   ein Strich zum neuen Reiter, und der Inhalt schiebt sich seitlich hinaus,
   während der nächste hereinkommt.
@@ -43,6 +45,7 @@ from .checkboxes import (
 )
 from .dropdowns import HaloDropdown
 from .flashtaskbar import flash_taskbar, stop_flashing
+from .halopromptbox import ExpandButton, HaloPromptBox
 from .imgbb import (
     ImgBBApiError, ImgBBClient, ImgBBError, ImgBBFileNotFoundError,
     ImgBBNetworkError, ImgBBUploadWorker, UploadResult
@@ -62,6 +65,7 @@ __all__ = [
     "ClickableLabel",
     "CloseButton",
     "DashBorderButton",
+    "ExpandButton",
     "FiberHaloButton",
     "FrameButton",
     "FrameToggle",
@@ -70,6 +74,7 @@ __all__ = [
     "HaloButton",
     "HaloCheckBox",
     "HaloDropdown",
+    "HaloPromptBox",
     "HaloTabWidget",
     "HeartCheckBox",
     "ImgBBApiError",

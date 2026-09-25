@@ -21,9 +21,9 @@ from PyQt6.QtWidgets import (
 
 from qt_controls_pyrs import (
     AnimatedToggle, DashBorderButton, FiberHaloButton, FrameButton, FrameToggle,
-    GlowButton, HaloButton, HaloCheckBox, HaloDropdown, HaloTabWidget,
-    HeartCheckBox, LineToggle, PromptEditor, PulseHaloButton, RaisedButton,
-    ReferenceThumb, ShineButton, SpreadButton, StatusBar
+    GlowButton, HaloButton, HaloCheckBox, HaloDropdown, HaloPromptBox,
+    HaloTabWidget, HeartCheckBox, LineToggle, PromptEditor, PulseHaloButton,
+    RaisedButton, ReferenceThumb, ShineButton, SpreadButton, StatusBar
 )
 
 class FolderDropdown(HaloDropdown):
@@ -64,11 +64,33 @@ class Demo(QWidget):
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 12)
-        layout.setSpacing(18)
+        # Eng gesetzt, damit alle Abschnitte ins Fenster passen.
+        layout.setSpacing(12)
 
         # Die Statuszeile wird als Letztes aufgebaut, weil sie im Layout ganz
         # unten sitzt. Die Handler hier oben benutzen sie erst beim Klicken,
         # die Reihenfolge stört also nicht.
+
+        # ------------------------------------------------------------------
+        # HaloPromptBox — Eingabefeld, das sich über den Inhalt darunter
+        # ausfahren lässt
+        #
+        # Im Layout steht nur ein Platzhalter, das Feld selbst schwebt darüber.
+        # Ein Klick auf den Doppelpfeil oben rechts fährt es bis zur
+        # Statuszeile aus, ein zweiter Klick oder Escape fährt es wieder ein.
+        # Wie weit es ausfahren darf, wird unten gesetzt (set_expand_stop),
+        # sobald die Statuszeile steht.
+        # ------------------------------------------------------------------
+        self.prompt_slot = QWidget()
+        self.prompt_slot.setFixedHeight(62)     # gut zwei Zeilen; ausgefahren viel mehr
+        self.prompt_slot.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
+        )
+        layout.addWidget(self.prompt_slot)
+
+        self.prompt_box = HaloPromptBox(self.prompt_slot, self)
+        self.prompt_box.setPlaceholderText("Prompt eingeben ...")
+        self.prompt_box.expanded_changed.connect(self.prompt_box_expanded)
 
         # ------------------------------------------------------------------
         # AnimatedToggle — Schiebeschalter statt QCheckBox
@@ -345,6 +367,10 @@ class Demo(QWidget):
         self.status = StatusBar(self.status_slot, self)
         self.status.setText("Bereit")
 
+        # Jetzt steht fest, wie weit das Prompt-Feld ausfahren darf: bis an
+        # die Statuszeile, die dadurch sichtbar bleibt.
+        self.prompt_box.set_expand_stop(self.status_slot)
+
         # Einmal ausrichten, sobald das Fenster seine endgültige Größe hat.
         QTimer.singleShot(0, self.status.sync_geometry)
 
@@ -357,6 +383,16 @@ class Demo(QWidget):
 
     def retry_toggled(self, checked: bool) -> None:
         self.status.setText(f"Autoretry: {'an' if checked else 'aus'}")
+
+    # ----------------------------------------------------------------------
+    # Handler: HaloPromptBox
+    # ----------------------------------------------------------------------
+
+    def prompt_box_expanded(self, expanded: bool) -> None:
+        if expanded:
+            self.status.setText("Prompt-Feld ausgefahren — Escape fährt es ein")
+            return
+        self.status.setText("Prompt-Feld eingefahren")
 
     # ----------------------------------------------------------------------
     # Handler: HaloTabWidget
@@ -441,7 +477,9 @@ class Demo(QWidget):
 
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
-        # Die Statuszeile schwebt, deshalb muss sie der Größe folgen.
+        # Prompt-Feld und Statuszeile schweben, deshalb müssen sie der Größe
+        # folgen.
+        self.prompt_box.sync_geometry()
         self.status.sync_geometry()
 
 

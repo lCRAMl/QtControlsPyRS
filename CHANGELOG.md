@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- `HaloPromptBox` aufgenommen: ein mehrzeiliges Eingabefeld im Halo-Stil, das
+  sich über den Inhalt darunter ausfahren lässt. Oben rechts sitzt ein
+  Doppelpfeil; ein Klick fährt das Feld in 300 ms nach unten aus, ein zweiter
+  Klick oder Escape wieder ein. `set_expand_stop()` legt fest, wo unten Schluss
+  ist. Wie die `StatusBar` schwebt es über einem Platzhalter im Layout, damit
+  das Ausfahren die Aufteilung darunter nicht verschiebt.
+- Die Demo zeigt es oben im Fenster; ausgefahren reicht es bis an die
+  Statuszeile. Damit alles ins Fenster passt, stehen die Abschnitte der Demo
+  etwas enger (Abstand 18 → 12 px).
+
 - `ReferenceThumb`: Ein Klick auf die Decke über einem geladenen Bild öffnete
   den Dateidialog zweimal — nach dem ersten Bild erschien sofort wieder ein
   Dialog. Die Decke nahm den Klick nicht an, und Qt reicht einen nicht

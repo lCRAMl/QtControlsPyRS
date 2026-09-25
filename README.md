@@ -11,6 +11,7 @@ Bedienelemente für PyQt6, die sich nach außen wie ihre Qt-Vorbilder verhalten.
 | `FiberHaloButton` | `QPushButton` | Dasselbe auffälliger: ziehende Farbflächen und schwingende Fasern füllen die ganze Fläche |
 | `HaloDropdown` | `QComboBox` | Auswahlfeld im Stil der Halo-Knöpfe; die Liste rollt weich auf, Buchstaben springen zum Eintrag |
 | `HaloTabWidget` | `QTabWidget` | Reiter mit gleitendem Strich; beim Wechsel schiebt sich der Inhalt seitlich hinaus und der nächste herein |
+| `HaloPromptBox` | `QPlainTextEdit` | Eingabefeld im Halo-Stil, das sich per Doppelpfeil über den Inhalt darunter ausfährt |
 | `AnimatedToggle` | `QCheckBox` | Schiebeschalter mit gleitendem Knopf |
 | `FrameToggle`, `LineToggle`, `HaloCheckBox` | `QCheckBox` | Schalter im Halo-Stil: Rahmen mit gleitender Kugel, Strich mit laufender Kugel, Kästchen mit auslaufendem Strich |
 | `HeartCheckBox` | `QCheckBox` | Herz zum Anhaken: es füllt sich mit einem Hüpfer, sechs Funken stieben weg |
@@ -36,7 +37,8 @@ qt_controls_pyrs/
     checkboxes/   AnimatedToggle, HeartCheckBox, FrameToggle, LineToggle, HaloCheckBox
     dropdowns/    HaloDropdown
     tabs/         HaloTabWidget
-    statusbar.py, referencethumb.py, imgbb.py, prompt_editor.py, flashtaskbar.py
+    statusbar.py, referencethumb.py, halopromptbox.py, imgbb.py,
+    prompt_editor.py, flashtaskbar.py
 ```
 
 Importiert wird weiterhin aus dem Paket selbst — `from qt_controls_pyrs import
@@ -78,8 +80,8 @@ eine Klassenkonstante dafür.
 python examples/demo.py
 ```
 
-Zeigt Schalter, Reiter, Auswahlfeld, Herz, alle Knöpfe, die Bild-Miniatur und
-die Statuszeile in einem Fenster, im Dunkelmodus. Mit gesetztem `IMGBB_API_KEY` lädt die Miniatur
+Zeigt das Prompt-Feld, Schalter, Reiter, Auswahlfeld, Herz, alle Knöpfe, die
+Bild-Miniatur und die Statuszeile in einem Fenster, im Dunkelmodus. Mit gesetztem `IMGBB_API_KEY` lädt die Miniatur
 auch wirklich hoch, sonst bleibt es bei der Vorschau.
 
 ## GlowButton
@@ -330,6 +332,73 @@ Nicht unterstützt: Reiter an der Seite oder unten, Symbole, Schließknöpfe und
 verschiebbare Reiter — die Leiste zeichnet nur ihre Beschriftungen. Den
 Dokumentmodus schaltet das Widget selbst ein; ohne ihn käme der Qt-Rahmen um
 die Seiten zurück.
+
+## HaloPromptBox
+
+```python
+from qt_controls_pyrs import HaloPromptBox
+
+# Im Layout steht nur ein Platzhalter, das Feld schwebt darüber.
+slot = QWidget()
+slot.setMinimumHeight(180)
+layout.addWidget(slot, 1)
+
+prompt = HaloPromptBox(slot, fenster)
+prompt.setPlaceholderText("Prompt eingeben ...")
+prompt.set_expand_stop(generate_btn)      # so weit fährt es aus
+```
+
+Ein mehrzeiliges Eingabefeld im Stil der Halo-Widgets: ein feiner Rahmen, innen
+der Fensterhintergrund, und unter der Maus wie beim Tippen wird der Rahmen weiß
+und glimmt innen auf. Oben rechts sitzt ein Doppelpfeil — ein Klick darauf
+fährt das Feld nach unten aus und legt es über das, was darunter liegt. Ein
+zweiter Klick oder Escape fährt es wieder ein, in 300 ms (`GROW_MS`).
+
+### Platzhalter statt Layout
+
+Das Feld hängt nicht im Layout. Dort steht ein Platzhalter (`slot`), der Lage
+und Breite vorgibt, und das Feld schwebt darüber — wie die `StatusBar`. Nur so
+kann es beim Ausfahren über seine Nachbarn wachsen, ohne die Aufteilung
+darunter zu verschieben. Dafür muss das Fenster zwei Dinge tun:
+
+```python
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self.prompt.sync_geometry()       # dem Platzhalter folgen
+```
+
+und mit `set_expand_stop(widget)` sagen, wo unten Schluss ist: ausgefahren
+reicht das Feld bis an die Oberkante dieses Widgets. Im APIImageGenerator ist
+das der Generate-Knopf — die Einstellungen sind dann zugedeckt, der Knopf
+bleibt bedienbar. Ohne Angabe geht es bis an die Unterkante des Elternfensters.
+
+Solange das Feld ausgefahren ist, deckt es zu, was darunter liegt: dort lässt
+sich nichts mehr anklicken, und was sich dort ändert, sieht man erst nach dem
+Einfahren. Wer von außen einfahren muss — etwa um auf ein verdecktes Feld
+hinzuweisen —, ruft `collapse()`; `is_expanded()` sagt, wie es gerade steht,
+und `expanded_changed` meldet jede Änderung.
+
+### Text
+
+Der Text liegt in einem ganz normalen `QPlainTextEdit` unter `prompt.text`;
+Zeilenumbruch, Auswahl, Kontextmenü und Tastenkürzel sind also die gewohnten.
+Direkt am Widget liegen `toPlainText()`, `setPlainText()`,
+`setPlaceholderText()`, `clear()` und das Signal `textChanged`. Rechts hält der
+Text so viel Platz frei, dass er nicht unter den Doppelpfeil läuft.
+
+### Einstellen
+
+```python
+class PromptBox(HaloPromptBox):
+    ROOM    = 16       # Rand links und rechts, bündig mit den Halo-Knöpfen
+    GROW_MS = 300      # Aus- und Einfahren (0 = ohne Bewegung)
+    RADIUS  = 0        # Ecken des Rahmens
+```
+
+Außerdem `ROOM_Y`, `PAD` (Abstand des Textes zum Rahmen), `GAP` (Abstand zum
+Doppelpfeil), `OUTLINE_ALPHA`, `INNER_GLOW` und `HOVER_MS`. Der Doppelpfeil
+selbst ist ein eigener Knopf (`ExpandButton`) mit `SIZE`, `GAP`, `REACH`,
+`WING` und den beiden Deckkraft-Werten.
 
 ## AnimatedToggle
 
