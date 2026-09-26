@@ -1,14 +1,14 @@
-from PyQt6.QtCore import QEvent, QPoint, Qt
-from PyQt6.QtGui import QKeyEvent
-from PyQt6.QtWidgets import QPushButton, QSizePolicy, QVBoxLayout, QWidget
+from PyQt6.QtCore import QEvent, QPoint, QPointF, Qt
+from PyQt6.QtGui import QEnterEvent, QKeyEvent
+from PyQt6.QtWidgets import QPushButton, QScrollBar, QSizePolicy, QVBoxLayout, QWidget
 
-from qt_controls_pyrs import HaloPromptBox
+from qt_controls_pyrs import HaloPromptBox, HaloScrollBar
 
 
 class Host(QWidget):
     """Fenster wie im APIImageGenerator: Platzhalter oben, darunter Inhalt und ein Knopf."""
 
-    def __init__(self) -> None:
+    def __init__(self, cls=HaloPromptBox) -> None:
         super().__init__()
         self.resize(400, 360)
 
@@ -26,7 +26,7 @@ class Host(QWidget):
         self.stop = QPushButton("Generate")
         column.addWidget(self.stop)
 
-        self.prompt = HaloPromptBox(self.slot, self)
+        self.prompt = cls(self.slot, self)
         self.prompt.set_expand_stop(self.stop)
 
     def resizeEvent(self, event) -> None:
@@ -121,21 +121,57 @@ def test_einfahren_stellt_alles_zurueck(qtbot):
     assert host.childAt(host.covered.geometry().center()) is host.covered
 
 
-def test_klick_auf_den_doppelpfeil_schaltet_um(qtbot, paint):
+def test_klick_auf_eine_leiste_schaltet_um(qtbot, paint):
     host = make(qtbot)
     prompt = host.prompt
-    assert prompt.expand_button._pointing_out, "eingefahren zeigen die Pfeile nach außen"
 
-    qtbot.mouseClick(prompt.expand_button, Qt.MouseButton.LeftButton)
+    # Eingefahren zeigen beide Pfeile nach außen: oben hinauf, unten hinab.
+    assert (prompt.top_bar.base_angle, prompt.bottom_bar.base_angle) == (0.0, 180.0)
+    assert prompt.top_bar.turn == 0.0 and prompt.bottom_bar.turn == 0.0
+
+    qtbot.mouseClick(prompt.top_bar, Qt.MouseButton.LeftButton)
     assert prompt.is_expanded()
-    assert not prompt.expand_button._pointing_out
-    paint(prompt.expand_button)
+    # Ausgefahren drehen sich beide um 180 Grad, zeigen also nach innen.
+    qtbot.waitUntil(lambda: prompt.top_bar.turn == 1.0, timeout=2000)
+    qtbot.waitUntil(lambda: prompt.bottom_bar.turn == 1.0, timeout=2000)
+    paint(prompt.top_bar)
+    paint(prompt.bottom_bar)
     settle(qtbot, host)
 
-    qtbot.mouseClick(prompt.expand_button, Qt.MouseButton.LeftButton)
+    # Die untere Leiste tut dasselbe.
+    qtbot.mouseClick(prompt.bottom_bar, Qt.MouseButton.LeftButton)
     assert not prompt.is_expanded()
-    assert prompt.expand_button._pointing_out
-    paint(prompt.expand_button)
+    qtbot.waitUntil(lambda: prompt.top_bar.turn == 0.0, timeout=2000)
+
+
+def test_untere_leiste_laesst_sich_abschalten(qtbot, paint):
+    class NurOben(HaloPromptBox):
+        BOTTOM_BAR = False
+
+    host = Host(cls=NurOben)
+    qtbot.addWidget(host)
+    host.show()
+    qtbot.waitExposed(host)
+
+    assert not host.prompt.bottom_bar.isVisible()
+    # Der Text reicht dann bis unten an den Rand.
+    rahmen = host.prompt._frame_rect()
+    text = host.prompt.text.geometry()
+    assert text.y() + text.height() == rahmen.y() + rahmen.height() - HaloPromptBox.PAD
+    paint(host.prompt)
+
+
+def test_maus_hellt_eine_leiste_auf(qtbot, paint):
+    host = make(qtbot)
+    bar = host.prompt.top_bar
+    assert bar.hover == 0.0
+
+    bar.enterEvent(QEnterEvent(QPointF(1.0, 1.0), QPointF(1.0, 1.0), QPointF(1.0, 1.0)))
+    qtbot.waitUntil(lambda: bar.hover == 1.0, timeout=2000)
+    paint(bar)
+
+    bar.leaveEvent(QEvent(QEvent.Type.Leave))
+    qtbot.waitUntil(lambda: bar.hover == 0.0, timeout=2000)
 
 
 def escape() -> QKeyEvent:
@@ -172,17 +208,28 @@ def test_rahmen_wird_hell_unter_der_maus_und_beim_tippen(qtbot, paint):
     qtbot.waitUntil(lambda: prompt.bright == 0.0, timeout=3000)
 
 
-def test_text_laesst_platz_fuer_den_doppelpfeil(qtbot):
+def test_leisten_sitzen_ueber_und_unter_dem_text(qtbot):
     host = make(qtbot)
     prompt = host.prompt
 
     rahmen = prompt._frame_rect()
-    knopf = prompt.expand_button.geometry()
+    oben = prompt.top_bar.geometry()
+    unten = prompt.bottom_bar.geometry()
     text = prompt.text.geometry()
 
-    assert rahmen.contains(knopf), "der Doppelpfeil sitzt im Rahmen"
-    assert text.right() < knopf.left(), "der Text läuft nicht unter den Doppelpfeil"
-    assert text.top() == knopf.top()
+    assert rahmen.contains(oben) and rahmen.contains(unten)
+    assert oben.width() == text.width() == unten.width(), "alle drei gleich breit"
+    assert oben.y() + oben.height() <= text.y(), "die obere Leiste liegt über dem Text"
+    assert text.y() + text.height() <= unten.y(), "die untere darunter"
+
+
+def test_scrollbar_ist_das_gluehende_band(qtbot):
+    host = make(qtbot)
+    balken = host.prompt.text.verticalScrollBar()
+
+    assert isinstance(balken, HaloScrollBar)
+    assert isinstance(balken, QScrollBar)
+    assert balken.sizeHint().width() == HaloScrollBar.THICKNESS
 
 
 def test_ohne_stopp_widget_bis_zum_fensterboden(qtbot):
@@ -200,10 +247,7 @@ def test_ohne_bewegung_sitzt_es_sofort(qtbot):
     class Sofort(HaloPromptBox):
         GROW_MS = 0
 
-    host = Host()
-    host.prompt.deleteLater()
-    host.prompt = Sofort(host.slot, host)
-    host.prompt.set_expand_stop(host.stop)
+    host = Host(cls=Sofort)
     qtbot.addWidget(host)
     host.show()
     qtbot.waitExposed(host)

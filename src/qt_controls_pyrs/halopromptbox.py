@@ -1,9 +1,10 @@
 # halopromptbox.py
 #
 # Prompt-Eingabe im Stil der Halo-Widgets: ein feiner Rahmen, innen der
-# Fensterhintergrund, weiß unter der Maus und während man tippt. Oben rechts
-# sitzt ein Doppelpfeil — ein Klick darauf fährt das Feld nach unten aus und
-# legt es über das, was darunter liegt.
+# Fensterhintergrund, weiß unter der Maus und während man tippt. Oben und
+# unten im Feld liegt je eine dünne Leiste mit einem Pfeil in der Mitte. Ein
+# Klick auf eine der beiden fährt das Feld nach unten aus und legt es über
+# das, was darunter liegt; die Pfeile drehen sich dabei um.
 #
 # Wie die StatusBar hängt das Feld nicht im Layout, sondern schwebt über einem
 # Platzhalter (`slot`). Nur so kann es beim Ausfahren über seine Nachbarn
@@ -15,93 +16,144 @@ from PyQt6.QtCore import (
     QAbstractAnimation, QEasingCurve, QEvent, QPoint, QPointF, QPropertyAnimation,
     QRect, QRectF, Qt, QTimer, pyqtProperty, pyqtSignal as Signal
 )
-from PyQt6.QtGui import QColor, QPainter, QPalette, QPen
+from PyQt6.QtGui import QColor, QPainter, QPalette, QPen, QPolygonF
 from PyQt6.QtWidgets import QFrame, QPlainTextEdit, QPushButton, QWidget
 
 from .buttons.hoverbuttons import _crisp, _faded, _glow, _outline
+from .haloscrollbar import HaloScrollBar
 
 
 def _clamp(value: float) -> float:
     return max(0.0, min(1.0, value))
 
 
-class ExpandButton(QPushButton):
-    """Der Doppelpfeil oben rechts im Feld.
+class ExpandBar(QPushButton):
+    """Die dünne Leiste mit dem Pfeil, oben und unten im Feld.
 
-    Ein ganz normaler Knopf — er zeichnet nur statt einer Fläche zwei Pfeile
-    auf der Diagonalen. Eingefahren zeigen sie nach außen, ausgefahren zur
-    Mitte.
+    Ein ganz normaler Knopf, nur anders gezeichnet: eine feine Linie über die
+    ganze Breite, in der Mitte ein Pfeil. Die ganze Leiste ist die
+    Klickfläche, und unter der Maus wird sie hell.
+
+    `base_angle` sagt, wohin der Pfeil in Ruhe zeigt: 0 nach oben (Leiste
+    oben im Feld), 180 nach unten (Leiste unten). Beim Umschalten dreht er
+    sich um 180 Grad, zeigt also zur jeweils anderen Seite.
     """
 
-    SIZE  = 22      # Kantenlänge der Klickfläche
-    GAP   = 2.0     # so weit von der Mitte entfernt beginnt ein Pfeil
-    REACH = 6.0     # so weit reicht er nach außen
-    WING  = 3.5     # Länge der beiden Striche an der Spitze
-    WIDTH = 1.4     # Strichstärke
+    HEIGHT = 16      # Höhe der Klickfläche
+    ARROW  = 4.5     # halbe Breite des Pfeils
+    GAP    = 8.0     # Lücke in der Linie links und rechts vom Pfeil
+    WIDTH  = 1.2     # Strichstärke
 
-    IDLE_ALPHA  = 0.55    # Deckkraft in Ruhe
+    IDLE_ALPHA  = 0.45    # Deckkraft in Ruhe
     HOVER_ALPHA = 1.0     # ... und unter der Maus
 
-    def __init__(self, parent: QWidget) -> None:
-        super().__init__(parent)
-        self._pointing_out = True
+    TURN_MS  = 220   # so lange dreht sich der Pfeil
+    HOVER_MS = 150   # so lange dauert das Aufhellen
 
-        self.setFixedSize(self.SIZE, self.SIZE)
+    def __init__(self, parent: QWidget, base_angle: float) -> None:
+        super().__init__(parent)
+        self.base_angle = base_angle
+        self._turn = 0.0      # 0 = wie base_angle, 1 = um 180 Grad gedreht
+        self._hover = 0.0
+
+        self.setFixedHeight(self.HEIGHT)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         # Die Eingabe soll beim Klick im Textfeld bleiben.
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
-    def set_pointing_out(self, pointing_out: bool) -> None:
-        """True: Pfeile nach außen (ausfahren). False: zur Mitte (einfahren)."""
-        self._pointing_out = pointing_out
+        self._turn_anim = QPropertyAnimation(self, b"turn", self)
+        self._turn_anim.setDuration(self.TURN_MS)
+        self._turn_anim.setEasingCurve(QEasingCurve.Type.InOutCubic)
+
+        self._hover_anim = QPropertyAnimation(self, b"hover", self)
+        self._hover_anim.setDuration(self.HOVER_MS)
+        self._hover_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+    # ==============================
+    # Animierte Eigenschaften
+    # ==============================
+
+    @pyqtProperty(float)
+    def turn(self) -> float:
+        return self._turn
+
+    @turn.setter
+    def turn(self, value: float) -> None:
+        self._turn = value
         self.update()
+
+    @pyqtProperty(float)
+    def hover(self) -> float:
+        return self._hover
+
+    @hover.setter
+    def hover(self, value: float) -> None:
+        self._hover = value
+        self.update()
+
+    def set_turned(self, turned: bool) -> None:
+        """True dreht den Pfeil zur anderen Seite, False zurück."""
+        target = 1.0 if turned else 0.0
+        if not self.isVisible():
+            self._turn_anim.stop()
+            self.turn = target
+            return
+        self._run(self._turn_anim, self._turn, target)
+
+    @staticmethod
+    def _run(anim: QPropertyAnimation, current: float, target: float) -> None:
+        anim.stop()
+        anim.setStartValue(current)
+        anim.setEndValue(target)
+        anim.start()
+
+    # ==============================
+    # Maus
+    # ==============================
 
     def enterEvent(self, event) -> None:
         super().enterEvent(event)
-        self.update()
+        self._run(self._hover_anim, self._hover, 1.0)
 
     def leaveEvent(self, event) -> None:
         super().leaveEvent(event)
-        self.update()
+        self._run(self._hover_anim, self._hover, 0.0)
+
+    # ==============================
+    # Darstellung
+    # ==============================
+
+    def _color(self) -> QColor:
+        ink = self.palette().color(QPalette.ColorRole.ButtonText)
+        alpha = self.IDLE_ALPHA + (self.HOVER_ALPHA - self.IDLE_ALPHA) * _clamp(self._hover)
+        return _faded(ink, alpha)
 
     def paintEvent(self, event) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.translate(QRectF(self.rect()).center())
 
         pen = QPen(self._color(), self.WIDTH)
         pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+        pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
         painter.setPen(pen)
 
-        self._draw_arrow(painter, 1.0)     # nach oben rechts
-        self._draw_arrow(painter, -1.0)    # nach unten links
+        middle = self.height() / 2.0
+        center = self.width() / 2.0
+        free = self.ARROW + self.GAP      # so viel Platz bleibt für den Pfeil
+
+        painter.drawLine(QPointF(0.0, middle), QPointF(center - free, middle))
+        painter.drawLine(QPointF(center + free, middle), QPointF(float(self.width()), middle))
+
+        # Der Pfeil in der Mitte. Ungedreht zeigt er nach oben; base_angle und
+        # die Drehung kommen dazu.
+        painter.translate(center, middle)
+        painter.rotate(self.base_angle + 180.0 * _clamp(self._turn))
+        painter.drawPolyline(QPolygonF([
+            QPointF(-self.ARROW, self.ARROW / 2.0),
+            QPointF(0.0, -self.ARROW / 2.0),
+            QPointF(self.ARROW, self.ARROW / 2.0),
+        ]))
         painter.end()
-
-    def _color(self) -> QColor:
-        ink = self.palette().color(QPalette.ColorRole.ButtonText)
-        alpha = self.HOVER_ALPHA if self.underMouse() else self.IDLE_ALPHA
-        return _faded(ink, alpha)
-
-    def _draw_arrow(self, painter: QPainter, direction: float) -> None:
-        """Ein Pfeil auf der Diagonalen.
-
-        `direction` = 1 zeichnet nach oben rechts, -1 nach unten links. Der
-        Nullpunkt liegt in der Mitte des Knopfes, y zeigt nach unten.
-        """
-        inner = QPointF(direction * self.GAP, -direction * self.GAP)
-        outer = QPointF(direction * self.REACH, -direction * self.REACH)
-        if self._pointing_out:
-            tail, tip = inner, outer
-        else:
-            tail, tip = outer, inner
-
-        painter.drawLine(tail, tip)
-
-        # Die Spitze: ein Strich waagerecht, einer senkrecht, beide entgegen
-        # der Pfeilrichtung.
-        wing = -self.WING if self._pointing_out else self.WING
-        painter.drawLine(tip, QPointF(tip.x() + wing * direction, tip.y()))
-        painter.drawLine(tip, QPointF(tip.x(), tip.y() - wing * direction))
 
 
 class HaloPromptBox(QWidget):
@@ -109,9 +161,13 @@ class HaloPromptBox(QWidget):
 
     Das Feld hängt nicht im Layout: dort steht ein Platzhalter (`slot`), der
     Lage und Breite vorgibt, und das Feld schwebt darüber — wie die StatusBar.
-    Ein Klick auf den Doppelpfeil oben rechts fährt es nach unten aus, bis an
-    die Oberkante des Widgets aus `set_expand_stop()`; ein zweiter Klick oder
-    Escape fährt es wieder ein. Ausgefahren deckt es zu, was darunter liegt.
+    Oben und unten liegt je eine dünne Leiste mit einem Pfeil; ein Klick auf
+    eine davon fährt das Feld aus, bis an die Oberkante des Widgets aus
+    `set_expand_stop()`. Ein zweiter Klick oder Escape fährt es wieder ein.
+    Eingefahren zeigen die Pfeile nach außen, ausgefahren nach innen.
+
+    Gescrollt wird mit der `HaloScrollBar`: einem glühenden Band, das sich
+    beim Scrollen wellt.
 
     Der Text liegt im ganz normalen `QPlainTextEdit` unter `box.text`.
     `toPlainText()`, `setPlainText()`, `setPlaceholderText()`, `clear()` und
@@ -122,20 +178,21 @@ class HaloPromptBox(QWidget):
     mit `set_expand_stop()` sagen, wo unten Schluss ist.
     """
 
-    # Meldet nach einem Klick auf den Doppelpfeil: True = ausgefahren.
+    # Meldet nach einem Klick auf eine Leiste: True = ausgefahren.
     expanded_changed = Signal(bool)
     # Wie bei QPlainTextEdit: meldet jede Änderung am Text.
     textChanged = Signal()
 
     ROOM          = 16      # Rand links und rechts, wie bei den Halo-Knöpfen
     ROOM_Y        = 4       # Rand oben und unten
-    PAD           = 12      # Abstand des Textes zum Rahmen
-    GAP           = 8       # Abstand zwischen Text und Doppelpfeil
+    PAD           = 12      # Abstand des Inhalts zum Rahmen
+    GAP           = 6       # Abstand zwischen Leiste und Text
     RADIUS        = 0       # Eckenradius des Rahmens
     OUTLINE_ALPHA = 0.5     # Deckkraft des Rahmens in Ruhe
     INNER_GLOW    = 20      # innerer Schein, wenn die Maus darauf steht oder getippt wird
     HOVER_MS      = 1250    # wie die Halo-Knöpfe: schnell hin, lang aus
     GROW_MS       = 300     # Aus- und Einfahren (0 = ohne Bewegung)
+    BOTTOM_BAR    = True    # untere Leiste zeigen (sie tut dasselbe wie die obere)
 
     def __init__(self, slot: QWidget, parent: QWidget) -> None:
         super().__init__(parent)
@@ -146,13 +203,19 @@ class HaloPromptBox(QWidget):
 
         self.text = QPlainTextEdit(self)
         self.text.setFrameShape(QFrame.Shape.NoFrame)
+        self.text.setVerticalScrollBar(HaloScrollBar(self.text))
         self.text.textChanged.connect(self.textChanged)
         # Für Escape zum Einfahren und für den hellen Rahmen beim Tippen.
         self.text.installEventFilter(self)
 
-        self.expand_button = ExpandButton(self)
-        self.expand_button.setToolTip("Feld ausfahren")
-        self.expand_button.clicked.connect(self.toggle)
+        # Oben zeigt der Pfeil in Ruhe nach oben, unten nach unten — nach
+        # außen also. Ausgefahren zeigen beide nach innen.
+        self.top_bar = ExpandBar(self, base_angle=0.0)
+        self.bottom_bar = ExpandBar(self, base_angle=180.0)
+        self.bottom_bar.setVisible(self.BOTTOM_BAR)
+        for bar in (self.top_bar, self.bottom_bar):
+            bar.setToolTip("Feld ausfahren")
+            bar.clicked.connect(self.toggle)
 
         self._grow_anim = QPropertyAnimation(self, b"geometry", self)
         self._grow_anim.setDuration(self.GROW_MS)
@@ -224,8 +287,10 @@ class HaloPromptBox(QWidget):
 
     def _set_expanded(self, expanded: bool) -> None:
         self._is_expanded = expanded
-        self.expand_button.set_pointing_out(not expanded)
-        self.expand_button.setToolTip("Feld einfahren" if expanded else "Feld ausfahren")
+        for bar in (self.top_bar, self.bottom_bar):
+            bar.set_turned(expanded)
+            bar.setToolTip("Feld einfahren" if expanded else "Feld ausfahren")
+
         if expanded:
             self._animate_to(self._expanded_rect())
         else:
@@ -288,21 +353,25 @@ class HaloPromptBox(QWidget):
         return self.rect().adjusted(self.ROOM, self.ROOM_Y, -self.ROOM, -self.ROOM_Y)
 
     def _place_children(self) -> None:
-        """Textfeld und Doppelpfeil in den Rahmen setzen."""
+        """Leisten und Textfeld in den Rahmen setzen: oben Leiste, Text, unten Leiste."""
         frame = self._frame_rect()
-        button_size = self.expand_button.width()
+        left = frame.x() + self.PAD
+        width = max(0, frame.width() - 2 * self.PAD)
 
-        button_x = frame.x() + frame.width() - self.PAD - button_size
-        button_y = frame.y() + self.PAD
-        self.expand_button.move(button_x, button_y)
+        top = frame.y() + self.PAD
+        self.top_bar.setGeometry(left, top, width, self.top_bar.height())
+        text_top = top + self.top_bar.height() + self.GAP
 
-        # Der Text hält rechts Platz für den Doppelpfeil frei, damit er nicht
-        # darunter läuft.
-        text_x = frame.x() + self.PAD
-        text_y = frame.y() + self.PAD
-        text_width = button_x - self.GAP - text_x
-        text_height = frame.height() - 2 * self.PAD
-        self.text.setGeometry(text_x, text_y, max(0, text_width), max(0, text_height))
+        text_bottom = frame.y() + frame.height() - self.PAD
+        # Nach der Einstellung fragen, nicht nach isVisible(): solange das
+        # Fenster noch nicht gezeigt wurde, ist kein Kind sichtbar.
+        if self.BOTTOM_BAR:
+            self.bottom_bar.setGeometry(
+                left, text_bottom - self.bottom_bar.height(), width, self.bottom_bar.height()
+            )
+            text_bottom -= self.bottom_bar.height() + self.GAP
+
+        self.text.setGeometry(left, text_top, width, max(0, text_bottom - text_top))
 
     # ==============================
     # Heller Rahmen unter der Maus und beim Tippen

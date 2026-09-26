@@ -11,7 +11,8 @@ Bedienelemente für PyQt6, die sich nach außen wie ihre Qt-Vorbilder verhalten.
 | `FiberHaloButton` | `QPushButton` | Dasselbe auffälliger: ziehende Farbflächen und schwingende Fasern füllen die ganze Fläche |
 | `HaloDropdown` | `QComboBox` | Auswahlfeld im Stil der Halo-Knöpfe; die Liste rollt weich auf, Buchstaben springen zum Eintrag |
 | `HaloTabWidget` | `QTabWidget` | Reiter mit gleitendem Strich; beim Wechsel schiebt sich der Inhalt seitlich hinaus und der nächste herein |
-| `HaloPromptBox` | `QPlainTextEdit` | Eingabefeld im Halo-Stil, das sich per Doppelpfeil über den Inhalt darunter ausfährt |
+| `HaloPromptBox` | `QPlainTextEdit` | Eingabefeld im Halo-Stil, das sich über Leisten mit Pfeil über den Inhalt darunter ausfährt |
+| `HaloScrollBar` | `QScrollBar` | Bildlaufleiste als glühendes Band, das sich beim Scrollen wellt; senkrecht wie waagerecht |
 | `AnimatedToggle` | `QCheckBox` | Schiebeschalter mit gleitendem Knopf |
 | `FrameToggle`, `LineToggle`, `HaloCheckBox` | `QCheckBox` | Schalter im Halo-Stil: Rahmen mit gleitender Kugel, Strich mit laufender Kugel, Kästchen mit auslaufendem Strich |
 | `HeartCheckBox` | `QCheckBox` | Herz zum Anhaken: es füllt sich mit einem Hüpfer, sechs Funken stieben weg |
@@ -37,7 +38,8 @@ qt_controls_pyrs/
     checkboxes/   AnimatedToggle, HeartCheckBox, FrameToggle, LineToggle, HaloCheckBox
     dropdowns/    HaloDropdown
     tabs/         HaloTabWidget
-    statusbar.py, referencethumb.py, halopromptbox.py, imgbb.py,
+    statusbar.py, referencethumb.py, halopromptbox.py, haloscrollbar.py,
+    imgbb.py,
     prompt_editor.py, flashtaskbar.py
 ```
 
@@ -350,9 +352,15 @@ prompt.set_expand_stop(generate_btn)      # so weit fährt es aus
 
 Ein mehrzeiliges Eingabefeld im Stil der Halo-Widgets: ein feiner Rahmen, innen
 der Fensterhintergrund, und unter der Maus wie beim Tippen wird der Rahmen weiß
-und glimmt innen auf. Oben rechts sitzt ein Doppelpfeil — ein Klick darauf
-fährt das Feld nach unten aus und legt es über das, was darunter liegt. Ein
-zweiter Klick oder Escape fährt es wieder ein, in 300 ms (`GROW_MS`).
+und glimmt innen auf. Oben und unten im Feld liegt je eine dünne Leiste mit
+einem Pfeil in der Mitte; die ganze Leiste ist die Klickfläche und wird unter
+der Maus hell. Ein Klick fährt das Feld nach unten aus und legt es über das,
+was darunter liegt — dabei drehen sich beide Pfeile um: eingefahren zeigen sie
+nach außen, ausgefahren nach innen. Ein zweiter Klick oder Escape fährt es
+wieder ein, in 300 ms (`GROW_MS`). `BOTTOM_BAR = False` lässt die untere Leiste
+weg.
+
+Gescrollt wird mit der [`HaloScrollBar`](#haloscrollbar), dem glühenden Band.
 
 ### Platzhalter statt Layout
 
@@ -383,8 +391,7 @@ und `expanded_changed` meldet jede Änderung.
 Der Text liegt in einem ganz normalen `QPlainTextEdit` unter `prompt.text`;
 Zeilenumbruch, Auswahl, Kontextmenü und Tastenkürzel sind also die gewohnten.
 Direkt am Widget liegen `toPlainText()`, `setPlainText()`,
-`setPlaceholderText()`, `clear()` und das Signal `textChanged`. Rechts hält der
-Text so viel Platz frei, dass er nicht unter den Doppelpfeil läuft.
+`setPlaceholderText()`, `clear()` und das Signal `textChanged`.
 
 ### Einstellen
 
@@ -395,10 +402,45 @@ class PromptBox(HaloPromptBox):
     RADIUS  = 0        # Ecken des Rahmens
 ```
 
-Außerdem `ROOM_Y`, `PAD` (Abstand des Textes zum Rahmen), `GAP` (Abstand zum
-Doppelpfeil), `OUTLINE_ALPHA`, `INNER_GLOW` und `HOVER_MS`. Der Doppelpfeil
-selbst ist ein eigener Knopf (`ExpandButton`) mit `SIZE`, `GAP`, `REACH`,
-`WING` und den beiden Deckkraft-Werten.
+Außerdem `BOTTOM_BAR`, `ROOM_Y`, `PAD` (Abstand des Inhalts zum Rahmen), `GAP`
+(Abstand zwischen Leiste und Text), `OUTLINE_ALPHA`, `INNER_GLOW` und
+`HOVER_MS`. Die Leisten selbst sind eigene Knöpfe (`ExpandBar`) mit `HEIGHT`,
+`ARROW`, `GAP`, `WIDTH`, `TURN_MS`, `HOVER_MS` und den beiden Deckkraft-Werten.
+
+## HaloScrollBar
+
+```python
+from qt_controls_pyrs import HaloScrollBar
+
+text_edit.setVerticalScrollBar(HaloScrollBar(text_edit))
+liste.setHorizontalScrollBar(HaloScrollBar(liste))
+```
+
+Eine Bildlaufleiste als glühendes Band in einer vertieften Schiene, nach einem
+Vorbild von CodePen (designfenix). Beim Scrollen wellt sich das Band und wird
+heller, danach läuft die Bewegung aus. Nach außen bleibt es eine `QScrollBar` —
+`value()`, `setValue()`, `valueChanged` und das Mausrad funktionieren
+unverändert, und sie lässt sich überall einsetzen, wo Qt eine Bildlaufleiste
+annimmt. Die `HaloPromptBox` bringt sie schon mit; gebraucht wird sie dort
+nicht — jedes andere Widget mit Bildlauf geht genauso.
+
+Sie ist 18 Pixel dick und funktioniert senkrecht wie waagerecht. Gezeichnet
+wird immer senkrecht gedacht; für eine waagerechte Leiste dreht der Maler zu
+Beginn um 90 Grad, alles Übrige bleibt gleich.
+
+Gezeichnet wird in vier Schichten übereinander (Schein, Saum, Hitze, Kern),
+jede schmaler und kräftiger als die davor. Qt kennt keinen Weichzeichner beim
+Zeichnen — das Glühen entsteht, indem die Schichten addiert werden.
+
+Gerechnet wird nur, solange etwas passiert: Nach dem Scrollen klingt die
+Bewegung in etwa einer halben Sekunde ab, dann bleibt der Bildtakt stehen und
+kostet nichts mehr. Wer weiterscrollt, hält sie oben.
+
+Einstellbar über Klassenkonstanten: `THICKNESS` (Dicke der Leiste), `TRACK_W`,
+`PADDING`, `MIN_THUMB`, `TRACK_FILL` und `TRACK_LINE` für die Schiene, `LAYERS`
+und `TIP` für das Band sowie `IDLE_WAVE`, `ACTIVE_WAVE`, `DECAY`, `SENSITIVITY`
+und `FRAME_MS` für die Bewegung. Die Farbe kommt aus der Palette
+(`ButtonText`).
 
 ## AnimatedToggle
 

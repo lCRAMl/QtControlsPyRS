@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- `HaloScrollBar` aufgenommen: eine Bildlaufleiste als glühendes Band in einer
+  vertieften Schiene, nach einem Vorbild von CodePen (designfenix). Beim
+  Scrollen wellt sich das Band und wird heller; danach läuft die Bewegung aus
+  und der Bildtakt bleibt stehen. Bleibt eine `QScrollBar`, ist 18 Pixel dick
+  und funktioniert senkrecht wie waagerecht — einsetzbar überall, wo Qt eine
+  Bildlaufleiste annimmt, nicht nur in der `HaloPromptBox`.
+- `HaloPromptBox`: der Doppelpfeil oben rechts ist weg. Stattdessen liegt oben
+  und unten im Feld je eine dünne Leiste mit einem Pfeil in der Mitte; die
+  ganze Leiste ist die Klickfläche. Eingefahren zeigen die Pfeile nach außen,
+  ausgefahren nach innen, und sie drehen sich beim Umschalten. `BOTTOM_BAR`
+  lässt die untere Leiste weg. Gescrollt wird mit der `HaloScrollBar`.
+
 - `HaloPromptBox` aufgenommen: ein mehrzeiliges Eingabefeld im Halo-Stil, das
   sich über den Inhalt darunter ausfahren lässt. Oben rechts sitzt ein
   Doppelpfeil; ein Klick fährt das Feld in 300 ms nach unten aus, ein zweiter
