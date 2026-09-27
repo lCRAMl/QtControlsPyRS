@@ -13,6 +13,7 @@ Bedienelemente für PyQt6, die sich nach außen wie ihre Qt-Vorbilder verhalten.
 | `HaloTabWidget` | `QTabWidget` | Reiter mit gleitendem Strich; beim Wechsel schiebt sich der Inhalt seitlich hinaus und der nächste herein |
 | `HaloPromptBox` | `QPlainTextEdit` | Eingabefeld im Halo-Stil, das sich über Leisten mit Pfeil über den Inhalt darunter ausfährt |
 | `HaloScrollBar` | `QScrollBar` | Bildlaufleiste als glühendes Band, das sich beim Scrollen wellt; senkrecht wie waagerecht |
+| `HaloSpectrum` | — | Echtzeit-Spektrum des Systemtons: links der linke Kanal, rechts der rechte, 0 Hz in der Mitte |
 | `AnimatedToggle` | `QCheckBox` | Schiebeschalter mit gleitendem Knopf |
 | `FrameToggle`, `LineToggle`, `HaloCheckBox` | `QCheckBox` | Schalter im Halo-Stil: Rahmen mit gleitender Kugel, Strich mit laufender Kugel, Kästchen mit auslaufendem Strich |
 | `HeartCheckBox` | `QCheckBox` | Herz zum Anhaken: es füllt sich mit einem Hüpfer, sechs Funken stieben weg |
@@ -25,7 +26,9 @@ Die animierten Widgets holen ihre Farben aus der Palette und sehen deshalb im
 Hell- wie im Dunkelmodus richtig aus.
 
 Abhängigkeiten: PyQt6, dazu `requests` — das braucht nur der ImgBB-Upload von
-`ReferenceThumb`.
+`ReferenceThumb`. Für `HaloSpectrum` kommen `numpy` und `soundcard` dazu, zu
+haben über `pip install -e .[audio]`; ohne sie bleibt der Rest der Sammlung
+unberührt.
 
 ## Aufbau
 
@@ -39,12 +42,15 @@ qt_controls_pyrs/
     dropdowns/    HaloDropdown
     tabs/         HaloTabWidget
     statusbar.py, referencethumb.py, halopromptbox.py, haloscrollbar.py,
-    imgbb.py,
-    prompt_editor.py, flashtaskbar.py
+    halospectrum.py, audiosource.py, imgbb.py, prompt_editor.py,
+    flashtaskbar.py
 ```
 
 Importiert wird weiterhin aus dem Paket selbst — `from qt_controls_pyrs import
-GlowButton` —, die Ordner sind also nur innen sichtbar. Wer mag, greift auch
+GlowButton` —, die Ordner sind also nur innen sichtbar. Einzige Ausnahme ist
+`HaloSpectrum`: es braucht numpy und soundcard und wird deshalb eigens geholt
+(`from qt_controls_pyrs.halospectrum import HaloSpectrum`), damit niemand die
+beiden Pakete mitschleppt, der das Spektrum nicht benutzt. Wer mag, greift auch
 direkt zu: `from qt_controls_pyrs.buttons import GlowButton`.
 
 ## Installation
@@ -441,6 +447,104 @@ Einstellbar über Klassenkonstanten: `THICKNESS` (Dicke der Leiste), `TRACK_W`,
 und `TIP` für das Band sowie `IDLE_WAVE`, `ACTIVE_WAVE`, `DECAY`, `SENSITIVITY`
 und `FRAME_MS` für die Bewegung. Die Farbe kommt aus der Palette
 (`ButtonText`).
+
+## HaloSpectrum
+
+```python
+from qt_controls_pyrs.audiosource import available_sources
+from qt_controls_pyrs.halospectrum import HaloSpectrum
+
+spectrum = HaloSpectrum()
+spectrum.failed.connect(melden)
+spectrum.start()                          # den Systemton mithören
+spectrum.start(available_sources()[3])    # oder eine bestimmte Quelle
+spectrum.stop()
+```
+
+Ein Spektrum in Echtzeit, im Halo-Stil mit feinem weißem Rahmen: **in der
+Mitte liegen 0 Hz**, nach links wächst die Frequenz des linken Kanals, nach
+rechts die des rechten. Die Bänder sind logarithmisch geteilt, jede Oktave
+bekommt also gleich viel Platz; der Pegel ist in dB. Jeder Balken steigt
+schnell und fällt ruhig, darüber steht ein Spitzenwert, der kurz hält und dann
+absinkt. Am Boden stehen Markierungen bei 100 Hz, 1 kHz und 10 kHz, und die
+Grundlinie bleibt auch ohne Ton stehen, damit das Widget nie leer wirkt.
+
+Ganz außen steht je Kanal ein schmaler Pegelbalken: gefüllt die Lautstärke
+(Effektivwert), darüber als Strich der lauteste Wert des Blocks. Daran sieht
+man Lautheit und Balance auf einen Blick — `meters()` und `meter_peaks()`
+geben beides auch als Zahl zurück. Steht der Strich ganz oben, ist die Quelle
+an der Aussteuerungsgrenze.
+
+Damit das Bild nicht zappelt, werden mehrere Blöcke gemittelt (`AVERAGE`,
+Voreinstellung 3). Ein einzelner Block prägt das Bild dann nicht mehr allein;
+`AVERAGE = 1` schaltet die Mittelung ab.
+
+### Zwei Zusatzpakete
+
+Dieses Widget braucht `numpy` (FFT) und `soundcard` (Aufnahme). Der Rest der
+Sammlung braucht beides nicht, deshalb hängt es nicht am Paket-Import, sondern
+wird eigens geholt — und die Pakete stehen in einer eigenen Gruppe:
+
+```
+pip install -e .[audio]
+```
+
+```python
+from qt_controls_pyrs.halospectrum import HaloSpectrum     # nicht aus qt_controls_pyrs
+```
+
+Fehlt `soundcard`, bleibt alles Übrige benutzbar: `available_sources()`
+liefert dann eine leere Liste, und `start()` meldet den Grund über `failed`.
+
+### Woher der Ton kommt
+
+`qt_controls_pyrs.audiosource` listet die Quellen: zuerst die Ausgaben, die
+mitgehört werden („Systemton", unter Windows über WASAPI-Loopback — dafür muss
+„Stereomix" *nicht* freigeschaltet sein), dann die Eingänge wie Mikrofon oder
+Line-In. `default_source()` ist die Standard-Ausgabe.
+
+Aufgenommen wird in einem eigenen Thread (`AudioCaptureWorker`), gerechnet wird
+die FFT im GUI-Thread — für 2048 Werte sind das mit numpy ein paar Dutzend
+Mikrosekunden. Geglättet und gezeichnet wird in einem festen Bildtakt, damit
+die Balken auch dann ruhig absinken, wenn gerade keine Blöcke kommen. Ist das
+Widget verborgen, steht der Bildtakt; die Aufnahme läuft, bis jemand `stop()`
+ruft. Vor dem Schließen gehört `stop()` aufgerufen, damit der Thread sauber
+endet — im `closeEvent` des Widgets geschieht das schon.
+
+Wer den Ton anderswoher hat (eigene Aufnahme, Datei, Prüfsignal), braucht die
+Aufnahme gar nicht und ruft einfach `feed(links, rechts)` mit zwei Blöcken.
+`levels()` und `peaks()` geben zurück, was gerade zu sehen ist.
+
+### Einstellen
+
+```python
+class Spektrum(HaloSpectrum):
+    BANDS      = 36         # Bänder je Kanal
+    FREQ_MIN   = 40.0       # innen, an der Mitte
+    FREQ_MAX   = 16000.0    # außen, am Rand
+    DB_FLOOR   = -70.0      # dieser Pegel ist ein leerer Balken
+    DB_CEILING = -6.0       # ... und dieser ein voller
+    SAMPLERATE = 44100      # Abtastrate
+    BLOCK      = 2048       # Werte je Block, also die Auflösung der FFT
+    AVERAGE    = 3          # so viele Blöcke werden gemittelt (1 = keine Mittelung)
+    COLOR_LOW  = "#5a8cff"  # Farbverlauf: unten am Balken
+    COLOR_HIGH = "#ffffff"  # ... und an der Spitze
+```
+
+`setColors(unten, oben)` ändert den Verlauf auch zur Laufzeit. Dazu die
+Bewegung (`FRAME_MS`, `ATTACK_MS`, `RELEASE_MS`, `PEAK_HOLD_MS`,
+`PEAK_FALL_S`), das Aussehen (`BAR_GAP`, `BAR_MIN_W`, `CENTER_GAP`,
+`PEAK_HEIGHT`, `PEAK_ALPHA`, `FLOOR_ALPHA`, `TICK_ALPHA`, `LABEL_HZ`,
+`LABEL_H`), die Pegelbalken (`METER_W`, `METER_GAP`, `METER_DB_FLOOR`,
+`METER_DB_CEILING`) und der Rahmen (`ROOM`, `ROOM_Y`, `PAD`, `RADIUS`,
+`OUTLINE_ALPHA`). `LABEL_H = 0` lässt die Beschriftung weg, `METER_W = 0` die
+Pegelbalken — dann bekommt das Spektrum deren Platz.
+
+Zum Ausprobieren mit echtem Ton:
+
+```
+python examples/spectrum.py
+```
 
 ## AnimatedToggle
 

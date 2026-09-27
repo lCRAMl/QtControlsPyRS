@@ -21,6 +21,8 @@ classifiers = [
 
 [project.optional-dependencies]
 test = ["pytest>=8", "pytest-qt>=4.4"]
+# nur fuer HaloSpectrum: numpy rechnet die FFT, soundcard nimmt den Ton auf
+audio = ["numpy>=1.24", "soundcard>=0.4.2"]
 
 [tool.setuptools.dynamic]
 version = { attr = "qt_controls_pyrs.__version__" }

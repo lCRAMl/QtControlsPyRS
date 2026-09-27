@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+- `HaloSpectrum` aufgenommen: ein Echtzeit-Spektrum im Halo-Stil mit feinem
+  weißem Rahmen. In der Mitte liegen 0 Hz, links steht der linke Kanal, rechts
+  der rechte; die Bänder sind logarithmisch geteilt, der Pegel ist in dB.
+  Balken steigen schnell und fallen ruhig, Spitzenwerte halten kurz und sinken
+  dann, am Boden stehen Markierungen bei 100 Hz, 1 kHz und 10 kHz, und die
+  Grundlinie bleibt auch ohne Ton stehen.
+- `HaloSpectrum`: ganz außen steht je Kanal ein schmaler Pegelbalken mit
+  Lautstärke und Spitzenwert — daran sieht man Lautheit und Balance. Über
+  `METER_W = 0` abschaltbar, die Werte gibt es auch über `meters()`.
+- `HaloSpectrum`: mehrere Blöcke werden gemittelt (`AVERAGE`, Voreinstellung
+  3), damit das Bild ruhiger steht. `AVERAGE = 1` rechnet wie zuvor jeden
+  Block für sich.
+- `qt_controls_pyrs.audiosource` dazu: listet Tonquellen (Ausgaben zum
+  Mithören und Eingänge) und nimmt in einem eigenen Thread auf. Unter Windows
+  über WASAPI-Loopback; „Stereomix" muss dafür nicht freigeschaltet sein.
+- Beides braucht `numpy` und `soundcard`, zu haben über die neue Gruppe
+  `pip install -e .[audio]`. Der Rest der Sammlung braucht sie nicht, deshalb
+  wird `HaloSpectrum` eigens importiert und nicht über das Paket mitgeladen.
+- Neues Beispiel `examples/spectrum.py`: Quelle wählen, zuhören, stoppen.
+
 - `HaloScrollBar` aufgenommen: eine Bildlaufleiste als glühendes Band in einer
   vertieften Schiene, nach einem Vorbild von CodePen (designfenix). Beim
   Scrollen wellt sich das Band und wird heller; danach läuft die Bewegung aus
