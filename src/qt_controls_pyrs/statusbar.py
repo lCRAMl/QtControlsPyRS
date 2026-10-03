@@ -160,7 +160,9 @@ class StatusBar(QFrame):
     def _target_rect(self, height: int) -> QRect:
         """Rechteck über dem Platzhalter — die Unterkante bleibt immer gleich."""
         parent = self.parentWidget()
-        if parent is None:
+        # Solange der Platzhalter noch nicht im Fenster hängt (Fensteraufbau),
+        # ginge mapTo() ins Leere; die nächste Größenänderung richtet aus.
+        if parent is None or not parent.isAncestorOf(self._slot):
             return self.geometry()
         top_left = self._slot.mapTo(parent, QPoint(0, 0))
         bottom = top_left.y() + self._slot.height()

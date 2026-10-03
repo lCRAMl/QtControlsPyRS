@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- `HaloImageView` aufgenommen: eine Bildvorschau mit demselben Rahmen wie die
+  `HaloPromptBox` — fein in Ruhe, unter der Maus hell mit innerem Schein. Ohne
+  Bild steht ein Platzhaltertext in der Mitte, ein Bild wird mit gleichem
+  Seitenverhältnis eingepasst, ein Klick meldet `clicked`. `start_busy()` und
+  `stop_busy()` legen eine Warte-Animation darüber: das Bild weichgezeichnet,
+  darauf drei pulsierende Kopien des Symbols aus `setBusyIcon()`. Sie wird
+  unter dem Rahmen gezeichnet und deckt ihn deshalb nie zu. Vorher lag die
+  Animation als eigenes Overlay im APIImageGenerator.
+- `HaloPromptBox` und `StatusBar`: keine Qt-Warnung „QWidget::mapTo(): parent
+  must be in parent hierarchy“ mehr, wenn sie entstehen, bevor ihr Platzhalter
+  im Fenster hängt (etwa weil das Layout erst später ans Fenster kommt). Sie
+  warten dann mit dem Ausrichten, bis das Layout steht.
+
 - `HaloSpectrum` aufgenommen: ein Echtzeit-Spektrum im Halo-Stil mit feinem
   weißem Rahmen. In der Mitte liegen 0 Hz, links steht der linke Kanal, rechts
   der rechte; die Bänder sind logarithmisch geteilt, der Pegel ist in dB.

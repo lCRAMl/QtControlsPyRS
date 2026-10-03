@@ -328,7 +328,11 @@ class HaloPromptBox(QWidget):
     def _collapsed_rect(self) -> QRect:
         """Genau über dem Platzhalter."""
         parent = self.parentWidget()
-        if parent is None:
+        # Während das Fenster aufgebaut wird, hängt der Platzhalter oft noch in
+        # einem Layout ohne Fenster und hat kein Elternwidget. mapTo() ginge
+        # dann ins Leere (Qt-Warnung "parent must be in parent hierarchy").
+        # Sobald das Layout steht, richtet sync_geometry() das Feld aus.
+        if parent is None or not parent.isAncestorOf(self._slot):
             return self.geometry()
         top_left = self._slot.mapTo(parent, QPoint(0, 0))
         return QRect(top_left, self._slot.size())
@@ -344,7 +348,9 @@ class HaloPromptBox(QWidget):
         parent = self.parentWidget()
         if parent is None:
             return self.geometry().bottom()
-        if self._stop is None:
+        # Wie beim Platzhalter: solange der Stopp noch nicht im Fenster hängt,
+        # bis an die Unterkante.
+        if self._stop is None or not parent.isAncestorOf(self._stop):
             return parent.height()
         return self._stop.mapTo(parent, QPoint(0, 0)).y()
 

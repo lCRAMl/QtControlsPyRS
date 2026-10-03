@@ -93,3 +93,25 @@ def test_verhaelt_sich_wie_ein_label(qtbot, host):
     bar.setText("Zweite Meldung")
     assert bar.text() == "Zweite Meldung"
     assert bar.toolTip() == "Zweite Meldung"
+
+
+def test_keine_maptowarnung_vor_dem_layout(qtbot):
+    from PyQt6.QtCore import qInstallMessageHandler
+    from PyQt6.QtWidgets import QVBoxLayout, QWidget
+
+    from qt_controls_pyrs import StatusBar
+
+    messages = []
+    previous = qInstallMessageHandler(lambda mode, ctx, msg: messages.append(msg))
+    try:
+        window = QWidget()
+        qtbot.addWidget(window)
+        column = QVBoxLayout()          # noch ohne Fenster
+        slot = QWidget()
+        column.addWidget(slot)
+        bar = StatusBar(slot, window)
+        bar.setText("Hallo")
+    finally:
+        qInstallMessageHandler(previous)
+
+    assert not [m for m in messages if "mapTo" in m]

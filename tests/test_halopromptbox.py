@@ -255,3 +255,32 @@ def test_ohne_bewegung_sitzt_es_sofort(qtbot):
     host.prompt.expand()
     knopf_oben = host.stop.mapTo(host, QPoint(0, 0)).y()
     assert host.prompt.y() + host.prompt.height() == knopf_oben
+
+
+def test_keine_maptowarnung_beim_aufbau_vor_dem_layout(qtbot):
+    """Das Feld entsteht, bevor das Layout mit dem Platzhalter am Fenster hängt."""
+    from PyQt6.QtCore import qInstallMessageHandler
+
+    messages = []
+    previous = qInstallMessageHandler(lambda mode, ctx, msg: messages.append(msg))
+    try:
+        window = QWidget()
+        qtbot.addWidget(window)
+        column = QVBoxLayout()          # noch ohne Fenster
+        slot = QWidget()
+        column.addWidget(slot)
+        stop = QPushButton("Generate")
+        column.addWidget(stop)
+
+        prompt = HaloPromptBox(slot, window)
+        prompt.set_expand_stop(stop)
+        window.setLayout(column)        # erst jetzt kommt das Layout ans Fenster
+        window.resize(300, 300)
+        window.show()
+        qtbot.waitExposed(window)
+        qtbot.wait(20)                  # nachgereichtes sync_geometry()
+    finally:
+        qInstallMessageHandler(previous)
+
+    assert not [m for m in messages if "mapTo" in m]
+    assert prompt.geometry().topLeft() == slot.mapTo(window, QPoint(0, 0))

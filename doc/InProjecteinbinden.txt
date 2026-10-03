@@ -1,0 +1,24 @@
+Übernahme in APIImageGenerator
+Schritt 1 — nichts installieren. Das Paket liegt dort editierbar (__editable__.qt_controls_pyrs-0.2.0.pth zeigt auf Z:\Code\python\QtControlsPyRS\src). Änderungen an der Quelle sind sofort aktiv. Prüfen kannst du es so:
+
+
+python -c "import qt_controls_pyrs; print(qt_controls_pyrs.__file__)"
+Kommt dort ein Pfad unter Z:\Code\python\QtControlsPyRS\src, ist alles richtig. Käme stattdessen site-packages\qt_controls_pyrs, wäre es eine echte Kopie — dann pip install -e Z:\Code\python\QtControlsPyRS einmal nachholen.
+
+Schritt 2 — APIImageGenerator neu starten. Mehr ist für die Übernahme nicht nötig: der neue Radius gilt, ohne dass im Projekt eine Zeile geändert wird.
+
+Schritt 3 — nur falls du dort einen anderen Wert willst. Drei Möglichkeiten, aufsteigend nach Sauberkeit:
+
+
+# a) global, einmal beim Start (z. B. in main(), vor dem Fensterbau)
+ReferenceThumb.GLOW_SPREAD = 0.75
+
+# b) je Miniatur, direkt nach dem Erzeugen in APIImageGenerator.py
+thumb.GLOW_SPREAD = 0.75
+
+# c) dauerhaft, in utility/controls.py — dort steht schon GenerateAiButton
+class ReferenceCard(ReferenceThumb):
+    GLOW_SPREAD = 0.75
+Bei (c) tauschst du in APIImageGenerator.py:596 ReferenceThumb(index, self.imgbb_api_key) gegen ReferenceCard(...) und ziehst den Import nach. Das ist der Weg, den ich empfehle: alle Abweichungen deines Programms stehen dann an einer Stelle, so wie beim Knopf.
+
+Schritt 4 — committen. Solange die Änderung nur im Arbeitsbaum von QtControlsPyRS liegt, hängt dein Programm an ungesichertem Stand. Für einen PyInstaller-Build brauchst du nichts anzupassen: die .spec bleibt wie sie ist, nur muss das Laufwerk Z: beim Bauen erreichbar sein, weil der editierbare Install dorthin zeigt.
