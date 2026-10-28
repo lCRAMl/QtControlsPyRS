@@ -26,13 +26,16 @@ def _clamp(value: float) -> float:
     return max(0.0, min(1.0, value))
 
 
-class _HaloToggle(QCheckBox):
-    """Was die drei Schalter teilen: Zustand, Gleiten, Maus und Beschriftung.
+class _HaloTick:
+    """Was alle Ankreuz-Bedienelemente teilen: Zustand, Gleiten, Maus, Beschriftung.
 
-    Nach außen bleibt es eine QCheckBox: `isChecked()`, `setChecked()` und das
-    `toggled`-Signal funktionieren unverändert; ein Klick auf die Beschriftung
-    schaltet ebenfalls um. Die Anzeige selbst zeichnet `_paint_indicator()` in
-    der jeweiligen Unterklasse.
+    Ein Mischstück und keine eigene Klasse, weil es für zwei verschiedene
+    Qt-Vorbilder gebraucht wird: die Schalter hier sind QCheckBox, der
+    HaloRadioButton nebenan ist QRadioButton. Gemeinsam ist beiden nur der
+    Vorfahr QAbstractButton — und alles, was hier steht.
+
+    Die Anzeige selbst zeichnet `_paint_indicator()` in der jeweiligen
+    Unterklasse.
     """
 
     GAP           = 8          # Abstand zwischen Anzeige und Beschriftung
@@ -225,6 +228,15 @@ class _HaloToggle(QCheckBox):
                 self.text(),
             )
         painter.end()
+
+
+class _HaloToggle(_HaloTick, QCheckBox):
+    """Die Ankreuz-Grundform als QCheckBox.
+
+    Nach außen bleibt es eine QCheckBox: `isChecked()`, `setChecked()` und das
+    `toggled`-Signal funktionieren unverändert; ein Klick auf die Beschriftung
+    schaltet ebenfalls um.
+    """
 
 
 class FrameToggle(_HaloToggle):

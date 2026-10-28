@@ -10,12 +10,16 @@ Bedienelemente für PyQt6, die sich nach außen wie ihre Qt-Vorbilder verhalten.
 | `PulseHaloButton` | `QPushButton` | Wie `HaloButton`, lässt während der laufenden Aufgabe ruhig Striche aus dem Rahmen wandern |
 | `FiberHaloButton` | `QPushButton` | Dasselbe auffälliger: ziehende Farbflächen und schwingende Fasern füllen die ganze Fläche |
 | `HaloDropdown` | `QComboBox` | Auswahlfeld im Stil der Halo-Knöpfe; die Liste rollt weich auf, Buchstaben springen zum Eintrag |
+| `HaloLineEdit` | `QLineEdit` | Einzeilige Eingabe mit derselben Leiste; hell, solange die Maus darauf steht oder darin geschrieben wird |
+| `HaloSpinBox`, `HaloDoubleSpinBox` | `QSpinBox`, `QDoubleSpinBox` | Zahlenfelder mit zwei feinen Pfeilen rechts; der benutzte blitzt in der Signalfarbe auf |
+| `HaloGroupBox` | `QGroupBox` | Rahmen um eine Gruppe; die Überschrift sitzt in einer Lücke im oberen Strich |
 | `HaloTabWidget` | `QTabWidget` | Reiter mit gleitendem Strich; beim Wechsel schiebt sich der Inhalt seitlich hinaus und der nächste herein |
 | `HaloPromptBox` | `QPlainTextEdit` | Eingabefeld im Halo-Stil, das sich über Leisten mit Pfeil über den Inhalt darunter ausfährt |
 | `HaloScrollBar` | `QScrollBar` | Bildlaufleiste als glühendes Band, das sich beim Scrollen wellt; senkrecht wie waagerecht |
 | `HaloSpectrum` | — | Echtzeit-Spektrum des Systemtons: links der linke Kanal, rechts der rechte, 0 Hz in der Mitte |
 | `AnimatedToggle` | `QCheckBox` | Schiebeschalter mit gleitendem Knopf |
 | `FrameToggle`, `LineToggle`, `HaloCheckBox` | `QCheckBox` | Schalter im Halo-Stil: Rahmen mit gleitender Kugel, Strich mit laufender Kugel, Kästchen mit auslaufendem Strich |
+| `HaloRadioButton` | `QRadioButton` | Auswahlknopf: ein Ring, der sich beim Wählen füllt und einmal einen Ring nach außen schickt |
 | `HeartCheckBox` | `QCheckBox` | Herz zum Anhaken: es füllt sich mit einem Hüpfer, sechs Funken stieben weg |
 | `StatusBar` | `QLabel` in einer Statuszeile | Klappt lange Meldungen kurz auf, ohne das Fenster zu verschieben |
 | `ReferenceThumb` | — | Bild-Miniatur als Karte, deren Rahmen dem Mauszeiger nachleuchtet; lädt die Datei zu ImgBB hoch und zeigt den Fortschritt |
@@ -38,13 +42,19 @@ von ihnen mehrere gibt oder geben wird:
 ```
 qt_controls_pyrs/
     buttons/      GlowButton, FrameButton, die fünf aus hoverbuttons.py
-    checkboxes/   AnimatedToggle, HeartCheckBox, FrameToggle, LineToggle, HaloCheckBox
+    checkboxes/   AnimatedToggle, HeartCheckBox, FrameToggle, LineToggle,
+                  HaloCheckBox, HaloRadioButton
     dropdowns/    HaloDropdown
+    spinboxes/    HaloSpinBox, HaloDoubleSpinBox
     tabs/         HaloTabWidget
-    statusbar.py, referencethumb.py, halopromptbox.py, haloscrollbar.py,
-    halospectrum.py, audiosource.py, imgbb.py, prompt_editor.py,
-    flashtaskbar.py
+    halogroupbox.py, halolineedit.py, statusbar.py, referencethumb.py,
+    halopromptbox.py, haloscrollbar.py, halospectrum.py, audiosource.py,
+    imgbb.py, prompt_editor.py, flashtaskbar.py
 ```
+
+Der `HaloRadioButton` liegt bei den Kästchen, obwohl er nach außen ein
+`QRadioButton` ist und kein `QCheckBox`: er stellt dieselbe Frage — angekreuzt
+oder nicht — und teilt sich mit den Schaltern die Grundform `_HaloTick`.
 
 Importiert wird weiterhin aus dem Paket selbst — `from qt_controls_pyrs import
 GlowButton` —, die Ordner sind also nur innen sichtbar. Einzige Ausnahme ist

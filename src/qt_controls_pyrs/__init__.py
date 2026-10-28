@@ -16,6 +16,13 @@ Eigenständige Widgets und Helfer, die sich wie ihre Qt-Vorbilder verhalten:
   und schwingende Fasern füllen die ganze Fläche.
 * :class:`HaloDropdown` – Auswahlfeld statt ``QComboBox`` im Stil der
   Halo-Knöpfe; die Liste kommt beim Aufklappen aus der Tiefe herein.
+* :class:`HaloLineEdit` – einzeilige Eingabe statt ``QLineEdit`` mit
+  derselben Leiste; hell, solange die Maus darauf steht oder darin
+  geschrieben wird.
+* :class:`HaloSpinBox`, :class:`HaloDoubleSpinBox` – Zahlenfelder statt
+  ``QSpinBox`` und ``QDoubleSpinBox``, mit zwei feinen Pfeilen rechts.
+* :class:`HaloGroupBox` – Gruppenrahmen statt ``QGroupBox``; die
+  Überschrift sitzt in einer Lücke im oberen Strich.
 * :class:`HaloImageView` – Bildvorschau mit dem Rahmen der HaloPromptBox,
   Platzhaltertext und eingebauter Warte-Animation (pulsierende Symbole über
   dem weichgezeichneten Bild).
@@ -30,6 +37,9 @@ Eigenständige Widgets und Helfer, die sich wie ihre Qt-Vorbilder verhalten:
 * :class:`FrameToggle`, :class:`LineToggle`, :class:`HaloCheckBox` – Schalter im
   Halo-Stil: ein Rahmen mit gleitender Kugel, ein Strich mit laufender Kugel
   und ein Kästchen, aus dem beim Anhaken ein Strich nach außen läuft.
+* :class:`HaloRadioButton` – Auswahlknopf statt ``QRadioButton``: ein
+  Ring, der sich beim Wählen füllt und einmal einen Ring nach außen
+  schickt.
 * :class:`HeartCheckBox` – Herz zum Anhaken, das sich mit einem Hüpfer
   füllt und Funken wegstieben lässt.
 * :class:`StatusBar` – Statuszeile, die lange Meldungen kurz aufklappt, ohne
@@ -46,11 +56,14 @@ from .buttons import (
     ShineButton, SpreadButton
 )
 from .checkboxes import (
-    AnimatedToggle, FrameToggle, HaloCheckBox, HeartCheckBox, LineToggle
+    AnimatedToggle, FrameToggle, HaloCheckBox, HaloRadioButton, HeartCheckBox,
+    LineToggle
 )
 from .dropdowns import HaloDropdown
 from .flashtaskbar import flash_taskbar, stop_flashing
+from .halogroupbox import HaloGroupBox
 from .haloimageview import HaloImageView
+from .halolineedit import HaloLineEdit
 from .halopromptbox import ExpandBar, HaloPromptBox
 from .haloscrollbar import HaloScrollBar
 from .imgbb import (
@@ -61,6 +74,7 @@ from .prompt_editor import PromptEditor, PromptHighlighter
 from .referencethumb import (
     ClickableLabel, CloseButton, ReferenceThumb, ThumbOverlay
 )
+from .spinboxes import HaloDoubleSpinBox, HaloSpinBox
 from .statusbar import StatusBar
 from .tabs import HaloTabWidget
 
@@ -80,10 +94,15 @@ __all__ = [
     "GlowButton",
     "HaloButton",
     "HaloCheckBox",
+    "HaloDoubleSpinBox",
     "HaloDropdown",
+    "HaloGroupBox",
     "HaloImageView",
+    "HaloLineEdit",
     "HaloPromptBox",
+    "HaloRadioButton",
     "HaloScrollBar",
+    "HaloSpinBox",
     "HaloTabWidget",
     "HeartCheckBox",
     "ImgBBApiError",

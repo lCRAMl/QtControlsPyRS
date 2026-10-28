@@ -2,6 +2,34 @@
 
 ## Unreleased
 
+- Vier Bedienelemente aufgenommen, die in der Sammlung fehlten, alle mit dem
+  Halo-Rahmen der übrigen: feiner Strich in Ruhe, innerer Schein und weißer
+  Rahmen unter der Maus.
+  - `HaloLineEdit` statt `QLineEdit`. Den Text zeichnet weiterhin Qt —
+    Schreibmarke, Auswahl und das Rollen bei langem Inhalt sind nichts, was
+    man nachbaut. Gezeichnet wird nur der Rahmen darunter. Hell wird er auf
+    zwei Wegen: durch die Maus und durch die Schreibmarke, damit ein Feld, in
+    das gerade getippt wird, hell bleibt.
+  - `HaloSpinBox` und `HaloDoubleSpinBox` statt `QSpinBox` und
+    `QDoubleSpinBox`, mit zwei feinen Pfeilen rechts. Der Pfeil unter der Maus
+    leuchtet auf, der benutzte blitzt in der Signalfarbe — auch wenn Tastatur
+    oder Mausrad geschaltet haben. Halten schaltet weiter, mit derselben
+    Staffelung wie bei Qts eigenen Pfeilen. Qts Pfeile sind abgeschaltet und
+    nicht überzeichnet: ein abgeschalteter Knopf nimmt keine Klicks mehr an.
+  - `HaloRadioButton` statt `QRadioButton`: ein Ring, der sich beim Wählen mit
+    einem Kern in der Signalfarbe füllt, während einmal ein Ring nach außen
+    läuft. Beim Abwählen läuft nichts hinaus, sonst blitzte bei jedem Wechsel
+    die halbe Gruppe auf. Die Ausschließlichkeit kommt unverändert von Qt.
+  - `HaloGroupBox` statt `QGroupBox`. Die Überschrift sitzt in einer Lücke im
+    oberen Strich; die Lücke entsteht durch Freistellen und nicht durch
+    Übermalen, denn eine Hintergrundfarbe hat dieses Widget nicht. Ist die
+    Gruppe abschaltbar, steht links ein Kästchen im Stil der `HaloCheckBox`.
+- Die Grundform der Schalter heißt jetzt `_HaloTick` und ist ein Mischstück
+  statt einer `QCheckBox`-Unterklasse. Grund: der `HaloRadioButton` braucht
+  dasselbe, ist nach außen aber ein `QRadioButton`. `_HaloToggle` gibt es
+  weiterhin, als `_HaloTick` plus `QCheckBox` — an `FrameToggle`,
+  `LineToggle` und `HaloCheckBox` ändert sich nichts.
+
 - `HaloImageView` aufgenommen: eine Bildvorschau mit demselben Rahmen wie die
   `HaloPromptBox` — fein in Ruhe, unter der Maus hell mit innerem Schein. Ohne
   Bild steht ein Platzhaltertext in der Mitte, ein Bild wird mit gleichem

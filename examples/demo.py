@@ -21,7 +21,8 @@ from PyQt6.QtWidgets import (
 
 from qt_controls_pyrs import (
     AnimatedToggle, DashBorderButton, FiberHaloButton, FrameButton, FrameToggle,
-    GlowButton, HaloButton, HaloCheckBox, HaloDropdown, HaloPromptBox,
+    GlowButton, HaloButton, HaloCheckBox, HaloDoubleSpinBox, HaloDropdown,
+    HaloGroupBox, HaloLineEdit, HaloPromptBox, HaloRadioButton, HaloSpinBox,
     HaloTabWidget, HeartCheckBox, LineToggle, PromptEditor, PulseHaloButton,
     RaisedButton, ReferenceThumb, ShineButton, SpreadButton, StatusBar
 )
@@ -188,6 +189,66 @@ class Demo(QWidget):
         self.folder_dropdown.setCurrentIndex(-1)
         self.folder_dropdown.currentTextChanged.connect(self.folder_changed)
         self.settings.addWidget(self.folder_dropdown)   # auf dem ersten Reiter
+
+        # ------------------------------------------------------------------
+        # HaloGroupBox — Rahmen um eine Gruppe, die Überschrift in einer
+        # Lücke im oberen Strich. Darin die drei Eingabeformen, damit man
+        # sieht, dass sie dieselbe Leiste benutzen wie das Dropdown darüber.
+        # ------------------------------------------------------------------
+        self.group = HaloGroupBox("Maße")
+        group_layout = QVBoxLayout(self.group)
+        group_layout.setSpacing(10)
+        self.settings.addWidget(self.group)
+
+        # HaloLineEdit: dieselbe Leiste, nur zum Hineinschreiben. Hell, solange
+        # die Maus darauf steht ODER die Schreibmarke darin blinkt.
+        self.label_edit = HaloLineEdit()
+        self.label_edit.setPlaceholderText("Bezeichnung")
+        self.label_edit.textChanged.connect(
+            lambda text: self.status.setText(f"Bezeichnung: {text or '—'}")
+        )
+        group_layout.addWidget(self.label_edit)
+
+        # HaloSpinBox: ganze Zahlen, zwei feine Pfeile rechts. Halten schaltet
+        # weiter; der benutzte Pfeil blitzt in der Signalfarbe auf.
+        self.length_spin = HaloSpinBox()
+        self.length_spin.setRange(1, 2000)
+        self.length_spin.setValue(360)
+        self.length_spin.setSuffix(" mm")
+        self.length_spin.valueChanged.connect(
+            lambda value: self.status.setText(f"Länge: {value} mm")
+        )
+        group_layout.addWidget(self.length_spin)
+
+        # HaloDoubleSpinBox: dasselbe mit Nachkommastellen
+        self.weight_spin = HaloDoubleSpinBox()
+        self.weight_spin.setRange(0.0, 999.0)
+        self.weight_spin.setDecimals(3)
+        self.weight_spin.setValue(5.0)
+        self.weight_spin.setSuffix(" kg")
+        self.weight_spin.valueChanged.connect(
+            lambda value: self.status.setText(f"Gewicht: {value:.3f} kg")
+        )
+        group_layout.addWidget(self.weight_spin)
+
+        # ------------------------------------------------------------------
+        # HaloRadioButton — genau einer von mehreren. Rund und nicht eckig,
+        # damit man die Entscheidung an der Form erkennt.
+        # ------------------------------------------------------------------
+        grip = QHBoxLayout()
+        grip.setSpacing(24)
+        group_layout.addLayout(grip)
+
+        self.grip_top = HaloRadioButton("Von oben")
+        self.grip_top.setChecked(True)
+        self.grip_side = HaloRadioButton("Seitlich")
+        for knopf in (self.grip_top, self.grip_side):
+            knopf.toggled.connect(
+                lambda on, k=knopf: on and self.status.setText(f"Griff: {k.text()}")
+            )
+            grip.addWidget(knopf)
+        grip.addStretch(1)
+
         self.settings.addStretch(1)
 
         # ------------------------------------------------------------------
