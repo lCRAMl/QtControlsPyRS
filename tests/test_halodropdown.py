@@ -408,3 +408,24 @@ def test_abgerundete_ecken(qtbot, paint):
     paint(box)
     open_fully(qtbot, box)
     paint(box.popup())
+
+
+def test_eine_feste_zeichenzahl_bremst_lange_eintraege(qtbot):
+    """Sonst zieht ein langer Eintrag die ganze Spalte auseinander.
+
+    QComboBox kennt dafuer setMinimumContentsLength() samt Richtlinie; wer sich
+    nach aussen wie eine QComboBox verhaelt, muss sich daran halten. Gefunden
+    beim Einbau in eine Anwendung: dort wurde die Bedienspalte doppelt so
+    breit wie zuvor, weil die Bremse ins Leere lief.
+    """
+    lang = ["Rueckschlagventil (schliesst bei offenem Sauger)", "Kurz"]
+    box = make(qtbot, items=lang)
+    ohne_bremse = box.sizeHint().width()
+
+    box.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+    box.setMinimumContentsLength(12)
+    assert box.sizeHint().width() < ohne_bremse
+
+    # Ohne Richtlinie bleibt es beim laengsten Eintrag.
+    box.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+    assert box.sizeHint().width() == ohne_bremse

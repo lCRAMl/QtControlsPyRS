@@ -421,12 +421,33 @@ class HaloDropdown(QComboBox):
     def _arrow_space(self) -> float:
         return 2 * self.ARROW + self.PAD
 
-    def sizeHint(self) -> QSize:
+    def _content_width(self) -> float:
+        """Wieviel Platz der Text braucht — oder brauchen DARF.
+
+        Normalerweise richtet sich das Feld nach seinem längsten Eintrag, wie
+        QComboBox es tut. Wer das nicht will, setzt wie bei QComboBox
+
+            box.setSizeAdjustPolicy(
+                QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+            box.setMinimumContentsLength(12)
+
+        und bekommt eine feste Zeichenzahl. Das ist kein Beiwerk: ein Eintrag
+        wie „Rückschlagventil (schließt bei offenem Sauger)" zieht sonst die
+        ganze Spalte auseinander, bis das Formular nicht mehr neben die
+        Zeichenfläche passt. Der vollständige Text bleibt beim Aufklappen
+        sichtbar.
+        """
         metrics = QFontMetricsF(self.font())
+        knapp = self.sizeAdjustPolicy() is QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
+        if knapp and self.minimumContentsLength() > 0:
+            return metrics.averageCharWidth() * self.minimumContentsLength()
+
         texts = [self._cased(self.itemText(i)) for i in range(self.count())]
         texts.append(self.placeholderText())
-        widest = max((metrics.horizontalAdvance(t) for t in texts), default=0.0)
-        width = widest + 2 * self.PAD + self._arrow_space() + 2 * self.ROOM
+        return max((metrics.horizontalAdvance(t) for t in texts), default=0.0)
+
+    def sizeHint(self) -> QSize:
+        width = self._content_width() + 2 * self.PAD + self._arrow_space() + 2 * self.ROOM
         return QSize(int(math.ceil(width)), self.HEIGHT + 2 * self.ROOM_Y)
 
     def minimumSizeHint(self) -> QSize:

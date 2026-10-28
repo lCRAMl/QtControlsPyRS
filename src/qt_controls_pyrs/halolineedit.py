@@ -55,6 +55,7 @@ class HaloLineEdit(QLineEdit):
     def __init__(self, *args, **kwargs) -> None:
         self._hover = 0.0
         self._focus = 0.0
+        self._alert = None
         super().__init__(*args, **kwargs)
 
         self.setFrame(False)      # der Rahmen kommt aus paintEvent, nicht aus dem Stil
@@ -84,6 +85,25 @@ class HaloLineEdit(QLineEdit):
         anim.setStartValue(current)
         anim.setEndValue(target)
         anim.start()
+
+
+    # ==============================
+    # Hinweisfarbe
+    # ==============================
+
+    def alert_color(self) -> QColor | None:
+        return QColor(self._alert) if self._alert is not None else None
+
+    def setAlert(self, color=None) -> None:  # noqa: N802 - Qt-Namensschema
+        """Färbt den Rahmen, solange etwas nicht stimmt. ``None`` hebt es auf.
+
+        Gedacht für Fehler und Warnungen am Feld selbst. Ein Stylesheet-Rand
+        griffe hier nicht: der Rahmen wird gezeichnet und nicht vom Stil
+        gesetzt. Die Farbe bleibt stehen, bis sie zurückgenommen wird - anders
+        als das kurze Aufblitzen nach einem Schritt.
+        """
+        self._alert = QColor(color) if color is not None else None
+        self.update()
 
     # ==============================
     # Animierte Eigenschaften
@@ -185,6 +205,18 @@ class HaloLineEdit(QLineEdit):
         painter.setPen(QPen(_faded(ink, alpha), 1.0))
         painter.setBrush(Qt.BrushStyle.NoBrush)
         _outline(painter, _crisp(rect, 1.0), max(radius - 0.5, 0.0))
+
+        if self._alert is not None:
+            # Kräftig, auch wenn das Feld gesperrt ist - ein Fehler soll
+            # sichtbar bleiben.
+            painter.save()
+            painter.setOpacity(1.0)
+            _glow(painter, rect, _faded(self._alert, 0.3), self.INNER_GLOW,
+                  inside=True, radius=radius)
+            painter.setPen(QPen(_faded(self._alert, 0.95), 1.4))
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            _outline(painter, _crisp(rect, 1.4), max(radius - 0.7, 0.0))
+            painter.restore()
 
     def paintEvent(self, event) -> None:
         painter = QPainter(self)

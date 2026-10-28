@@ -42,6 +42,13 @@ Eigenständige Widgets und Helfer, die sich wie ihre Qt-Vorbilder verhalten:
   schickt.
 * :class:`HeartCheckBox` – Herz zum Anhaken, das sich mit einem Hüpfer
   füllt und Funken wegstieben lässt.
+* :class:`NumberField`, :class:`IntField` – Zahl und Stückzahl mit Einheit
+  daneben; das Zahlenfeld hält darunter Platz für eine Meldung und färbt
+  bei :meth:`NumberField.set_error` den Rahmen.
+* :class:`ResultGrid` – beschriftete Ergebniswerte in zwei Spalten, in
+  einem Halo-Rahmen; die Zahlen stehen in fester Laufweite untereinander.
+* :class:`StaleBanner` – Band über einer Anzeige, die nicht mehr zu den
+  aktuellen Eingaben gehört.
 * :class:`StatusBar` – Statuszeile, die lange Meldungen kurz aufklappt, ohne
   die Fensteraufteilung zu verändern.
 * :class:`ReferenceThumb` – Bild-Miniatur als Karte, deren Rahmen dem Zeiger
@@ -61,6 +68,9 @@ from .checkboxes import (
 )
 from .dropdowns import HaloDropdown
 from .flashtaskbar import flash_taskbar, stop_flashing
+from .formfields import (
+    IntField, MONO_FAMILY, NumberField, ResultGrid, StaleBanner, mono_font
+)
 from .halogroupbox import HaloGroupBox
 from .haloimageview import HaloImageView
 from .halolineedit import HaloLineEdit
@@ -111,18 +121,24 @@ __all__ = [
     "ImgBBFileNotFoundError",
     "ImgBBNetworkError",
     "ImgBBUploadWorker",
+    "IntField",
     "LineToggle",
+    "MONO_FAMILY",
+    "NumberField",
     "PromptEditor",
     "PromptHighlighter",
     "PulseHaloButton",
     "RaisedButton",
     "ReferenceThumb",
+    "ResultGrid",
     "ShineButton",
     "SpreadButton",
+    "StaleBanner",
     "StatusBar",
     "ThumbOverlay",
     "UploadResult",
     "__version__",
     "flash_taskbar",
+    "mono_font",
     "stop_flashing",
 ]

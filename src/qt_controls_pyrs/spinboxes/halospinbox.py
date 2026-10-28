@@ -71,6 +71,7 @@ class _HaloSpin:
     def _init_halo(self) -> None:
         self._hover = 0.0
         self._focus = 0.0
+        self._alert = None
         self._up = 0.0          # Deckkraft des oberen Pfeils
         self._down = 0.0
         self._flash_up = 0.0    # Aufblitzen nach einem Schritt
@@ -139,6 +140,25 @@ class _HaloSpin:
     def setAccentColor(self, color) -> None:
         """Die Farbe des Aufblitzens, nur für dieses Feld."""
         self._accent = QColor(color)
+        self.update()
+
+
+    # ==============================
+    # Hinweisfarbe
+    # ==============================
+
+    def alert_color(self) -> QColor | None:
+        return QColor(self._alert) if self._alert is not None else None
+
+    def setAlert(self, color=None) -> None:  # noqa: N802 - Qt-Namensschema
+        """Färbt den Rahmen, solange etwas nicht stimmt. ``None`` hebt es auf.
+
+        Gedacht für Fehler und Warnungen am Feld selbst. Ein Stylesheet-Rand
+        griffe hier nicht: der Rahmen wird gezeichnet und nicht vom Stil
+        gesetzt. Die Farbe bleibt stehen, bis sie zurückgenommen wird - anders
+        als das kurze Aufblitzen nach einem Schritt.
+        """
+        self._alert = QColor(color) if color is not None else None
         self.update()
 
     # ==============================
@@ -378,6 +398,18 @@ class _HaloSpin:
         painter.setPen(QPen(_faded(ink, alpha), 1.0))
         painter.setBrush(Qt.BrushStyle.NoBrush)
         _outline(painter, _crisp(rect, 1.0), max(radius - 0.5, 0.0))
+
+        if self._alert is not None:
+            # Kräftig, auch wenn das Feld gesperrt ist - ein Fehler soll
+            # sichtbar bleiben.
+            painter.save()
+            painter.setOpacity(1.0)
+            _glow(painter, rect, _faded(self._alert, 0.3), self.INNER_GLOW,
+                  inside=True, radius=radius)
+            painter.setPen(QPen(_faded(self._alert, 0.95), 1.4))
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            _outline(painter, _crisp(rect, 1.4), max(radius - 0.7, 0.0))
+            painter.restore()
 
     def _paint_arrow(
         self, painter: QPainter, box: QRectF, pointing_up: bool,

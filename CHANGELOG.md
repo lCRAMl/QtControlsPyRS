@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+- `HaloDropdown` achtet jetzt auf `setMinimumContentsLength()` samt
+  `AdjustToMinimumContentsLengthWithIcon`, wie `QComboBox` es tut. Vorher
+  richtete es sich immer nach seinem längsten Eintrag und ließ die Bremse ins
+  Leere laufen — aufgefallen beim Einbau in eine Anwendung, wo ein Eintrag wie
+  „Rückschlagventil (schließt bei offenem Sauger)" die Bedienspalte
+  auseinanderzog. Wer sich nach außen wie eine `QComboBox` verhält, muss sich
+  auch an deren Breitenregeln halten.
+- `NumberField`, `IntField`, `ResultGrid` und `StaleBanner` aufgenommen — die
+  zusammengesetzten Teile eines Eingabeformulars, bisher in einer Anwendung
+  zuhause. Sie bauen auf den neuen Halo-Elementen auf: die Zahlenfelder auf
+  `HaloSpinBox` und `HaloDoubleSpinBox`, das Ergebnisraster auf
+  `HaloGroupBox`. Farben kommen aus der Qt-Palette oder aus Klassenkonstanten
+  statt aus einem Stylesheet; `StaleBanner` zeichnet sein Band selbst, weil ein
+  Stylesheet am Rahmen auch die Beschriftung getroffen hätte.
+- `HaloLineEdit` und die Zahlenfelder kennen jetzt `setAlert(color)`: der
+  Rahmen bleibt eingefärbt, bis die Farbe zurückgenommen wird. Gebraucht für
+  `NumberField.set_error()` — ein Stylesheet-Rand griffe dort nicht, weil die
+  Leiste ihren Rahmen selbst zeichnet und nicht vom Stil bekommt.
 - Vier Bedienelemente aufgenommen, die in der Sammlung fehlten, alle mit dem
   Halo-Rahmen der übrigen: feiner Strich in Ruhe, innerer Schein und weißer
   Rahmen unter der Maus.

@@ -21,6 +21,9 @@ Bedienelemente für PyQt6, die sich nach außen wie ihre Qt-Vorbilder verhalten.
 | `FrameToggle`, `LineToggle`, `HaloCheckBox` | `QCheckBox` | Schalter im Halo-Stil: Rahmen mit gleitender Kugel, Strich mit laufender Kugel, Kästchen mit auslaufendem Strich |
 | `HaloRadioButton` | `QRadioButton` | Auswahlknopf: ein Ring, der sich beim Wählen füllt und einmal einen Ring nach außen schickt |
 | `HeartCheckBox` | `QCheckBox` | Herz zum Anhaken: es füllt sich mit einem Hüpfer, sechs Funken stieben weg |
+| `NumberField`, `IntField` | — | Zahl und Stückzahl mit Einheit daneben; das Zahlenfeld hält Platz für eine Meldung und färbt bei `set_error()` den Rahmen |
+| `ResultGrid` | — | Beschriftete Ergebniswerte in zwei Spalten im Halo-Rahmen; Zahlen in fester Laufweite untereinander |
+| `StaleBanner` | — | Band über einer Anzeige, die nicht mehr zu den aktuellen Eingaben gehört |
 | `StatusBar` | `QLabel` in einer Statuszeile | Klappt lange Meldungen kurz auf, ohne das Fenster zu verschieben |
 | `ReferenceThumb` | — | Bild-Miniatur als Karte, deren Rahmen dem Mauszeiger nachleuchtet; lädt die Datei zu ImgBB hoch und zeigt den Fortschritt |
 | `PromptEditor` | `QTextEdit` | Hebt Abschnittsüberschriften im Text hervor |
@@ -47,10 +50,15 @@ qt_controls_pyrs/
     dropdowns/    HaloDropdown
     spinboxes/    HaloSpinBox, HaloDoubleSpinBox
     tabs/         HaloTabWidget
-    halogroupbox.py, halolineedit.py, statusbar.py, referencethumb.py,
-    halopromptbox.py, haloscrollbar.py, halospectrum.py, audiosource.py,
-    imgbb.py, prompt_editor.py, flashtaskbar.py
+    formfields.py, halogroupbox.py, halolineedit.py, statusbar.py,
+    referencethumb.py, halopromptbox.py, haloscrollbar.py, halospectrum.py,
+    audiosource.py, imgbb.py, prompt_editor.py, flashtaskbar.py
 ```
+
+`formfields.py` fasst zusammen, woraus ein Eingabeformular besteht:
+`NumberField`, `IntField`, `ResultGrid` und `StaleBanner`. Sie sind keine
+Ersatzteile für ein einzelnes Qt-Vorbild, sondern zusammengesetzt — und bauen
+ihrerseits auf `HaloSpinBox`, `HaloDoubleSpinBox` und `HaloGroupBox` auf.
 
 Der `HaloRadioButton` liegt bei den Kästchen, obwohl er nach außen ein
 `QRadioButton` ist und kein `QCheckBox`: er stellt dieselbe Frage — angekreuzt
