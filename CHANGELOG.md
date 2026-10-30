@@ -10,6 +10,15 @@
   darunter Datei und Größe, Ziel-URL, Zeitlimit, Dauer bis zum Fehler und die
   technische Ausnahme. Der API-Key steht nie darin. Eine Antwort ohne JSON führt nicht mehr zu „Unerwarteter Fehler“.
 
+- Beschriftungen von `HaloCheckBox`, `FrameToggle`, `LineToggle` und
+  `HaloRadioButton` brechen auf Wunsch um (`WRAP_WIDTH`). `QCheckBox` kann das
+  nicht, weil es die Beschriftung dem Stil überlässt — hier wird sie selbst
+  gezeichnet, also geht es. Gebraucht beim Einbau in eine Anwendung: eine Zeile
+  wie „Teilweise aufliegende Sauger als tragend zählen" misst einzeilig über
+  600 Pixel und zwang die ganze Bedienspalte auf diese Breite. Mit Umbruch sank
+  deren Mindestbreite von 641 auf 386 Pixel.
+- `NumberField.NOTE_WIDTH` hält die Meldung unter dem Feld mindestens so breit,
+  dass sie nicht in eine Säule aus zwei Wörtern umbricht.
 - `HaloSpinBox` und `HaloDoubleSpinBox`: die Pfeile ließen sich nicht drücken.
   QAbstractSpinBox legt sein `QLineEdit` über die GANZE Fläche, sobald Qts
   eigene Pfeile abgeschaltet sind — die gezeichneten Pfeile lagen damit unter

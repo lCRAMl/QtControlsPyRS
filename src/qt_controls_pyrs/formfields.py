@@ -127,6 +127,15 @@ class NumberField(_UnitField):
     NOTE_MIN_PT  = 7
     NOTE_HEIGHT  = 14         # reservierter Platz für die Meldung
 
+    #: Mindestbreite der Meldung. 0 heißt: nimm, was das Layout gibt.
+    #:
+    #: In einer schmalen Spalte bricht ein Satz wie „Ohne max. Stapellast wird
+    #: die Belastung nicht geprüft" sonst in eine Säule aus zwei Wörtern um und
+    #: reißt eine fingerbreite Lücke ins Formular. Qt schätzt die Höhe eines
+    #: umbrechenden Labels für die Breite, die es gerade bekommt — und das ist
+    #: in einem Raster wenig.
+    NOTE_WIDTH   = 200
+
     def __init__(
         self,
         unit: str = "",
@@ -157,6 +166,8 @@ class NumberField(_UnitField):
         self._message = QLabel("")
         self._message.setWordWrap(True)
         self._message.setMinimumHeight(self.NOTE_HEIGHT)
+        if self.NOTE_WIDTH:
+            self._message.setMinimumWidth(self.NOTE_WIDTH)
         font = self._message.font()
         font.setPointSize(max(self.NOTE_MIN_PT, font.pointSize() - self.NOTE_SHRINK))
         self._message.setFont(font)

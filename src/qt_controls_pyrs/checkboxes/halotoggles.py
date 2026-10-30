@@ -13,8 +13,8 @@
 from __future__ import annotations
 
 from PyQt6.QtCore import (
-    QEasingCurve, QEvent, QPointF, QPropertyAnimation, QRectF, QSize, QSizeF, Qt,
-    pyqtProperty
+    QEasingCurve, QEvent, QPointF, QPropertyAnimation, QRect, QRectF, QSize,
+    QSizeF, Qt, pyqtProperty
 )
 from PyQt6.QtGui import QBrush, QColor, QPainter, QPainterPath, QPalette, QPen, QRadialGradient
 from PyQt6.QtWidgets import QCheckBox
@@ -44,6 +44,15 @@ class _HaloTick:
     OUTLINE_ALPHA = 0.5        # Deckkraft von Rahmen und Strich in Ruhe
     SLIDE_MS      = 200        # Umschalten
     HOVER_MS      = 1250       # wie die Halo-Knöpfe: schnell hin, lang aus
+
+    #: Ab welcher Textbreite die Beschriftung umbricht. 0 heißt: nie.
+    #:
+    #: QCheckBox kann das nicht — es überlässt die Beschriftung dem Stil, und
+    #: der setzt sie einzeilig. Hier wird sie selbst gezeichnet, also geht es.
+    #: Gebraucht wird es, sobald ein Formular in einer schmalen Spalte steht:
+    #: eine Zeile wie „Teilweise aufliegende Sauger als tragend zählen" misst
+    #: über 600 Pixel und zwingt die ganze Spalte auf diese Breite.
+    WRAP_WIDTH = 0
 
     def __init__(self, text: str = "", parent=None) -> None:
         self._position = 0.0      # 0 = aus, 1 = an — gleitet dazwischen
@@ -152,12 +161,27 @@ class _HaloTick:
         size = self._indicator_size()
         return QRectF(0.0, (self.height() - size.height()) / 2, size.width(), size.height())
 
+    def _text_rect(self, verfuegbar: float) -> QRectF:
+        """Platz, den die Beschriftung braucht — umgebrochen, wenn erlaubt."""
+        if not self.text():
+            return QRectF()
+        if self.WRAP_WIDTH > 0:
+            breite = min(verfuegbar, float(self.WRAP_WIDTH)) if verfuegbar > 0 else float(self.WRAP_WIDTH)
+            return QRectF(self.fontMetrics().boundingRect(
+                QRect(0, 0, int(breite), 10_000),
+                int(Qt.TextFlag.TextWordWrap | Qt.AlignmentFlag.AlignLeft),
+                self.text(),
+            ))
+        breite = self.fontMetrics().horizontalAdvance(self.text())
+        return QRectF(0, 0, breite, self.fontMetrics().height())
+
     def sizeHint(self) -> QSize:
         size = self._indicator_size()
+        text = self._text_rect(0.0)
         width = size.width()
         if self.text():
-            width += self.GAP + self.fontMetrics().horizontalAdvance(self.text())
-        height = max(size.height(), self.fontMetrics().height() + 4)
+            width += self.GAP + text.width()
+        height = max(size.height(), text.height() + 4, self.fontMetrics().height() + 4)
         return QSize(int(round(width)), int(round(height)))
 
     def minimumSizeHint(self) -> QSize:
@@ -222,9 +246,12 @@ class _HaloTick:
             painter.setPen(QPen(self.palette().color(
                 QPalette.ColorGroup.Normal, QPalette.ColorRole.WindowText
             )))
+            flags = Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+            if self.WRAP_WIDTH > 0:
+                flags |= Qt.TextFlag.TextWordWrap
             painter.drawText(
                 QRectF(left, 0, max(self.width() - left, 0), self.height()),
-                int(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter),
+                int(flags),
                 self.text(),
             )
         painter.end()
