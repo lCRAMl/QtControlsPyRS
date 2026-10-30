@@ -6,6 +6,7 @@ import base64
 import logging
 import os
 import threading
+import time
 from dataclasses import dataclass
 from typing import Callable
 
@@ -49,13 +50,33 @@ class UploadResult:
 # Client
 # ---------------------------------------------------------------------------
 
-class ImgBBClient:
-    UPLOAD_ENDPOINT = "https://api.imgbb.com/1/upload"
-    DEFAULT_TIMEOUT = 30  # Sekunden
+def _shorten(text: str, limit: int = 300) -> str:
+    """Kürzt lange Antworten für die Fehlermeldung."""
+    text = text.strip()
+    if len(text) <= limit:
+        return text
+    return text[:limit] + " …"
 
-    def __init__(self, api_key: str, timeout: int = DEFAULT_TIMEOUT) -> None:
+
+class ImgBBClient:
+    """Lädt Bilder zu ImgBB hoch.
+
+    Upload-URL und Zeitlimit gibt das Programm vor (bei APIImageGenerator aus
+    dessen config.ini); ohne Angabe gelten UPLOAD_ENDPOINT und DEFAULT_TIMEOUT.
+    """
+
+    UPLOAD_ENDPOINT = "https://api.imgbb.com/1/upload"
+    DEFAULT_TIMEOUT = 30  # Sekunden, je Netzwerkschritt (Verbinden, Senden, Antwort)
+
+    def __init__(
+        self,
+        api_key: str,
+        timeout: float = DEFAULT_TIMEOUT,
+        upload_endpoint: str = UPLOAD_ENDPOINT,
+    ) -> None:
         self.api_key = api_key
         self.timeout = timeout
+        self.upload_endpoint = upload_endpoint
 
     def upload_image(
         self,
@@ -63,6 +84,10 @@ class ImgBBClient:
         progress_callback: Callable[[float], None] | None = None,
     ) -> UploadResult:
         """Lädt ein Bild auf ImgBB hoch und gibt das Ergebnis zurück.
+
+        Die Fehlermeldungen sind mehrzeilig: oben, was schiefging, darunter
+        Datei, Ziel, Zeitlimit, Dauer und die technische Ursache. Der API-Key
+        steht nie darin.
 
         Args:
             local_path:         Dateipfad des lokalen Bildes.
@@ -87,39 +112,107 @@ class ImgBBClient:
             "image": encoded_string,
         }
 
+        started = time.monotonic()
         try:
             response = requests.post(
-                self.UPLOAD_ENDPOINT,
+                self.upload_endpoint,
                 data=data,
                 timeout=self.timeout,
             )
-        except requests.exceptions.Timeout as exc:
-            raise ImgBBNetworkError("Upload-Timeout ueberschritten.") from exc
-        except requests.exceptions.ConnectionError as exc:
-            raise ImgBBNetworkError(f"Verbindungsfehler: {exc}") from exc
         except requests.exceptions.RequestException as exc:
-            raise ImgBBNetworkError(f"Netzwerkfehler: {exc}") from exc
+            elapsed_s = time.monotonic() - started
+            details = self._upload_details(local_path, len(encoded_string), elapsed_s)
+            raise ImgBBNetworkError(self._network_error_text(exc, details)) from exc
+        elapsed_s = time.monotonic() - started
 
         if progress_callback:
             progress_callback(0.9)  # HTTP-Request abgeschlossen
 
-        # HTTP-Fehler: Body auslesen fuer bessere Fehlermeldung
+        details = self._upload_details(local_path, len(encoded_string), elapsed_s)
+
+        # HTTP-Fehler: die Fehlermeldung von ImgBB gehört in die erste Zeile,
+        # die rohe Antwort nur weiter unten. Eine HTML-Fehlerseite in der
+        # ersten Zeile würde ein QLabel als Rich Text deuten und verstümmeln.
         if response.status_code != 200:
+            message = ""
             try:
                 body = response.json()
-                detail = body.get("error", {}).get("message", response.text)
-            except ValueError:
-                detail = response.text
-            raise ImgBBNetworkError(f"HTTP {response.status_code}: {detail}")
+                message = str(body.get("error", {}).get("message", ""))
+            except (ValueError, AttributeError):
+                pass
+            first_line = f"HTTP {response.status_code} {response.reason}"
+            if message:
+                first_line += f": {_shorten(message)}"
+            lines = [first_line]
+            lines += details
+            lines.append(f"Antwort: {_shorten(response.text)}")
+            raise ImgBBNetworkError("\n".join(lines))
 
-        result = response.json()
+        try:
+            result = response.json()
+        except ValueError as exc:
+            lines = ["ImgBB hat mit HTTP 200 geantwortet, aber kein JSON geliefert."]
+            lines += details
+            lines.append(f"Antwort: {_shorten(response.text)}")
+            raise ImgBBApiError("\n".join(lines)) from exc
+
         if not result.get("success"):
-            raise ImgBBApiError(f"ImgBB API-Fehler: {result}")
+            lines = ["ImgBB meldet einen Fehler (success = false)."]
+            lines += details
+            lines.append(f"Antwort: {_shorten(str(result))}")
+            raise ImgBBApiError("\n".join(lines))
 
         return UploadResult(
             display_url=result["data"]["display_url"],
             delete_url=result["data"].get("delete_url"),
         )
+
+    # ------------------------------------------------------------------
+    # Fehlertexte
+    # ------------------------------------------------------------------
+
+    def _upload_details(self, local_path: str, payload_size: int, elapsed_s: float) -> list[str]:
+        """Die Zeilen, die zu jeder Upload-Fehlermeldung gehören."""
+        file_mb = os.path.getsize(local_path) / 1_000_000
+        payload_mb = payload_size / 1_000_000
+        return [
+            f"Datei: {os.path.basename(local_path)} ({file_mb:.1f} MB, gesendet als "
+            f"Base64 {payload_mb:.1f} MB)",
+            f"Ziel: {self.upload_endpoint}",
+            f"Zeitlimit: {self.timeout:g} s je Netzwerkschritt, Dauer bis zum Fehler: {elapsed_s:.1f} s",
+        ]
+
+    def _network_error_text(self, exc: requests.exceptions.RequestException, details: list[str]) -> str:
+        """Mehrzeilige Meldung zu einem Fehler, bei dem keine Antwort ankam."""
+        # ConnectTimeout ist zugleich ein ConnectionError — deshalb zuerst prüfen.
+        if isinstance(exc, requests.exceptions.ConnectTimeout):
+            summary = (
+                f"Upload-Timeout: keine Verbindung zum Server innerhalb von {self.timeout:g} s."
+            )
+            hint = "Server nicht erreichbar, oder Netzwerk, Proxy oder Firewall blockieren."
+        elif isinstance(exc, requests.exceptions.ReadTimeout):
+            summary = (
+                f"Upload-Timeout: der Server hat nicht innerhalb von {self.timeout:g} s geantwortet."
+            )
+            hint = (
+                "Bei großen Bildern oder langsamer Leitung das Zeitlimit erhöhen "
+                "(APIImageGenerator: upload_timeout_s in der config.ini)."
+            )
+        elif isinstance(exc, requests.exceptions.Timeout):
+            summary = f"Upload-Timeout überschritten ({self.timeout:g} s)."
+            hint = "Das Zeitlimit erhöhen oder die Verbindung prüfen."
+        elif isinstance(exc, requests.exceptions.ConnectionError):
+            summary = "Verbindungsfehler beim Upload."
+            hint = "Netzwerkverbindung, Upload-URL und Proxy prüfen."
+        else:
+            summary = "Netzwerkfehler beim Upload."
+            hint = "Upload-URL und Netzwerk prüfen."
+
+        lines = [summary]
+        lines += details
+        lines.append(f"Ursache: {type(exc).__name__}: {exc}")
+        lines.append(f"Hinweis: {hint}")
+        return "\n".join(lines)
 
     # ------------------------------------------------------------------
     # Hilfsmethoden

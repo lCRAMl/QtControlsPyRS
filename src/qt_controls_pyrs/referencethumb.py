@@ -277,6 +277,12 @@ class ReferenceThumb(QWidget):
     Liegt ein Bild darin, bleibt das Leuchten auf dem Rahmen, und unter der
     Maus legt sich eine halbdurchsichtige Decke mit einem runden X darüber:
     das X entfernt das Bild, ein Klick daneben tauscht es aus.
+
+    Ein gewähltes Bild wird sofort zu ImgBB hochgeladen. `upload_endpoint`
+    und `upload_timeout_s` legen fest, wohin und wie lange je Netzwerkschritt
+    gewartet wird; ohne Angabe gelten die Voreinstellungen von ImgBBClient.
+    Schlägt der Upload fehl, meldet `upload_failed` eine mehrzeilige
+    Beschreibung (Ursache, Datei, Ziel, Zeitlimit, Dauer).
     """
 
     cleared = Signal(int)
@@ -308,6 +314,8 @@ class ReferenceThumb(QWidget):
     def __init__(
         self, index: int, imgbb_api_key: str, parent: QWidget | None = None,
         start_dir: str = "",
+        upload_endpoint: str = ImgBBClient.UPLOAD_ENDPOINT,
+        upload_timeout_s: float = ImgBBClient.DEFAULT_TIMEOUT,
     ) -> None:
         self._hover = 0.0
         self._glow = 0.0
@@ -316,7 +324,10 @@ class ReferenceThumb(QWidget):
         self.index = index
         self.imgbb_api_key = imgbb_api_key
         self._start_dir = str(start_dir)
-        self.upload_url: str | None = None
+        # Wohin hochgeladen wird und wie lange je Netzwerkschritt gewartet wird
+        self._upload_endpoint = upload_endpoint
+        self._upload_timeout_s = upload_timeout_s
+        self.upload_url: str | None = None      # Ergebnis: Adresse des hochgeladenen Bildes
 
         self._worker: ImgBBUploadWorker | None = None
         self._uploading = False
@@ -442,7 +453,11 @@ class ReferenceThumb(QWidget):
             return
 
         self._uploading = True
-        client = ImgBBClient(self.imgbb_api_key)
+        client = ImgBBClient(
+            self.imgbb_api_key,
+            timeout=self._upload_timeout_s,
+            upload_endpoint=self._upload_endpoint,
+        )
         self._worker = ImgBBUploadWorker(client, path)
         self._worker.progress.connect(lambda v: self.set_progress(v, self._COLOR_UPLOADING))
         self._worker.finished.connect(self._on_upload_finished)
