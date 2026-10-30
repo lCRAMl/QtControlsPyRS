@@ -80,6 +80,39 @@ def test_tastatur_und_rad_schalten_weiter(qtbot, cls):
 
 
 @pytest.mark.parametrize("cls", BEIDE)
+def test_die_pfeile_liegen_frei(qtbot, cls):
+    """Kein Kindwidget darf ueber den Pfeilen liegen.
+
+    QAbstractSpinBox legt sein QLineEdit ueber die ganze Flaeche, sobald Qts
+    eigene Pfeile abgeschaltet sind. Die gezeichneten Pfeile lagen dadurch
+    unter einem fremden Widget: sichtbar, aber nicht zu druecken.
+
+    Der Test unten mit qtbot.mouseClick findet das NICHT - er stellt das
+    Ereignis direkt dem Spinfeld zu und springt ueber das Kindwidget hinweg.
+    Aufgefallen ist es erst beim Einbau in eine Anwendung. Deshalb diese
+    Pruefung daneben: sie fragt, was unter dem Zeiger wirklich liegt.
+    """
+    feld = make(qtbot, cls)
+    oben, unten = feld._arrow_rects()
+
+    for name, box in (("hoch", oben), ("herunter", unten)):
+        kind = feld.childAt(box.center().toPoint())
+        assert kind is None, (
+            "Ueber dem Pfeil " + name + " liegt " + type(kind).__name__
+            + " - ein Klick kaeme dort nie an"
+        )
+
+
+@pytest.mark.parametrize("cls", BEIDE)
+def test_der_zeiger_ueber_dem_pfeil_laesst_ihn_leuchten(qtbot, cls):
+    """Dafuer braucht das Feld Maustracking - sonst kommt nur Gedruecktes an."""
+    feld = make(qtbot, cls)
+
+    assert feld.hasMouseTracking()
+    assert feld.lineEdit().hasMouseTracking()
+
+
+@pytest.mark.parametrize("cls", BEIDE)
 def test_klick_auf_den_pfeil_schaltet(qtbot, cls):
     feld = make(qtbot, cls)
     oben, unten = feld._arrow_rects()
@@ -177,11 +210,14 @@ def test_der_benutzte_pfeil_blitzt_auf(qtbot, paint, cls):
 
 @pytest.mark.parametrize("cls", BEIDE)
 def test_die_zahl_laeuft_nicht_unter_die_pfeile(qtbot, cls):
+    """Freigehalten wird ueber die GEOMETRIE des Textfeldes, nicht ueber seinen
+    Textrand: ein Rand verschiebt nur die Buchstaben, das Widget selbst laege
+    weiterhin ueber den Pfeilen und finge die Klicks ab."""
     feld = make(qtbot, cls)
+    oben, _ = feld._arrow_rects()
 
-    rechts = feld.lineEdit().textMargins().right()
-    assert rechts >= feld.ARROW_ZONE, (
-        "Rechts muesste mindestens die Pfeilspalte frei bleiben"
+    assert feld.lineEdit().geometry().right() <= oben.left(), (
+        "Das Textfeld reicht in die Pfeilspalte hinein"
     )
 
 

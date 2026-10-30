@@ -118,6 +118,10 @@ class NumberField(_UnitField):
 
     value_changed = pyqtSignal(float)
 
+    #: Welches Spinfeld benutzt wird. Eine Unterklasse darf hier ein eigenes
+    #: eintragen - etwa eine engere Fassung fuer ein dichtes Formular.
+    SPIN = HaloDoubleSpinBox
+
     MIN_WIDTH    = 110        # Mindestbreite des Feldes
     NOTE_SHRINK  = 1          # Punkt kleiner als die übrige Schrift
     NOTE_MIN_PT  = 7
@@ -134,7 +138,7 @@ class NumberField(_UnitField):
         value: float = 0.0,
         parent: QWidget | None = None,
     ) -> None:
-        spin = HaloDoubleSpinBox()
+        spin = self.SPIN()
         spin.setRange(minimum, maximum)
         spin.setDecimals(decimals)
         spin.setSingleStep(step)
@@ -229,6 +233,9 @@ class IntField(_UnitField):
 
     value_changed = pyqtSignal(int)
 
+    #: Siehe NumberField.SPIN.
+    SPIN = HaloSpinBox
+
     MIN_WIDTH = 110
 
     def __init__(
@@ -241,7 +248,7 @@ class IntField(_UnitField):
         special_zero_text: str = "",
         parent: QWidget | None = None,
     ) -> None:
-        spin = HaloSpinBox()
+        spin = self.SPIN()
         spin.setRange(minimum, maximum)
         spin.setValue(value)
         spin.setMinimumWidth(self.MIN_WIDTH)
@@ -306,15 +313,34 @@ class ResultGrid(HaloGroupBox):
     SPACING_X     = 14
     SPACING_Y     = 4
 
+    #: Wieviele Wertpaare nebeneinander stehen.
+    #:
+    #: Eins ist die schlichte Liste. Zwei halbiert die Höhe des Blocks und
+    #: macht ihn dafür breiter — das lohnt, sobald die Spalte breit genug ist
+    #: und der Block sonst nach unten aus dem Fenster läuft. Die Zeilen füllen
+    #: sich dabei von links nach rechts, erst dann kommt die nächste.
+    COLUMNS = 1
+
+    #: Abstand zwischen zwei Wertpaaren, wenn mehrere nebeneinander stehen.
+    PAIR_GAP = 26
+
     def __init__(self, title: str = "Ergebnis", parent: QWidget | None = None) -> None:
         super().__init__(title, parent)
         self._grid = QGridLayout(self)
-        self._grid.setContentsMargins(0, 0, 0, 0)   # die Ränder setzt die HaloGroupBox
+        self._apply_margins()   # die Raender der HaloGroupBox gelten fuer dieses Raster
         self._grid.setHorizontalSpacing(self.SPACING_X)
         self._grid.setVerticalSpacing(self.SPACING_Y)
-        self._grid.setColumnStretch(1, 1)
+        for paar in range(max(self.COLUMNS, 1)):
+            self._grid.setColumnStretch(2 * paar + 1, 1)
+            if paar:
+                self._grid.setColumnMinimumWidth(2 * paar, self.PAIR_GAP)
         self._rows: dict[str, QLabel] = {}
-        self._row_index = 0
+        self._row_index = 0          # laufende Nummer der Zeile, nicht des Rasters
+
+    def _cell(self) -> tuple[int, int]:
+        """Rasterzeile und erste Rasterspalte für den nächsten Eintrag."""
+        paare = max(self.COLUMNS, 1)
+        return self._row_index // paare, 2 * (self._row_index % paare)
 
     def _ink(self) -> QColor:
         return self.palette().color(
@@ -334,8 +360,9 @@ class ResultGrid(HaloGroupBox):
         # Zahlen zum Herauskopieren — sonst tippt sie jemand ab.
         display.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
 
-        self._grid.addWidget(caption, self._row_index, 0)
-        self._grid.addWidget(display, self._row_index, 1)
+        zeile, spalte = self._cell()
+        self._grid.addWidget(caption, zeile, spalte)
+        self._grid.addWidget(display, zeile, spalte + 1)
         self._rows[key] = display
         self._row_index += 1
 
@@ -346,8 +373,16 @@ class ResultGrid(HaloGroupBox):
         palette.setColor(QPalette.ColorRole.WindowText,
                          _faded(self._ink(), self.LINE_ALPHA))
         line.setPalette(palette)
-        self._grid.addWidget(line, self._row_index, 0, 1, 2)
-        self._row_index += 1
+
+        # Eine Trennlinie geht IMMER ueber die volle Breite und beginnt eine
+        # neue Zeile. Mitten in einer Zeile waere sie keine Trennung mehr,
+        # sondern ein Strich zwischen zwei Werten.
+        paare = max(self.COLUMNS, 1)
+        if self._row_index % paare:
+            self._row_index += paare - (self._row_index % paare)
+        zeile, _ = self._cell()
+        self._grid.addWidget(line, zeile, 0, 1, 2 * paare)
+        self._row_index += paare
 
     def set_value(self, key: str, value: str, color: str = "") -> None:
         """Setzt eine Zeile. Eine unbekannte Zeile wird still übergangen."""

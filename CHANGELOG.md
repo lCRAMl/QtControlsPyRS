@@ -10,6 +10,26 @@
   darunter Datei und Größe, Ziel-URL, Zeitlimit, Dauer bis zum Fehler und die
   technische Ausnahme. Der API-Key steht nie darin. Eine Antwort ohne JSON führt nicht mehr zu „Unerwarteter Fehler“.
 
+- `HaloSpinBox` und `HaloDoubleSpinBox`: die Pfeile ließen sich nicht drücken.
+  QAbstractSpinBox legt sein `QLineEdit` über die GANZE Fläche, sobald Qts
+  eigene Pfeile abgeschaltet sind — die gezeichneten Pfeile lagen damit unter
+  einem fremden Widget, sichtbar, aber unerreichbar. Das Textfeld bekommt
+  jetzt eine Geometrie, die die Pfeilspalte frei lässt. Dazu Maustracking,
+  damit der Pfeil unter dem Zeiger überhaupt aufleuchten kann.
+  Der vorhandene Test fand das nicht: `qtbot.mouseClick` stellt das Ereignis
+  direkt dem Spinfeld zu und springt über das Kindwidget hinweg. Daneben steht
+  jetzt ein Test, der fragt, was unter dem Zeiger wirklich liegt.
+- `HaloGroupBox` setzt seine Ränder am LAYOUT statt am Widget. Sobald ein
+  Stylesheet irgendeine Kastenangabe für die Klasse enthält — `margin`,
+  `padding`, auch mit Wert 0 —, übersteuert Qt damit `setContentsMargins()`,
+  und der Inhalt klebt am Rahmen. Ein Layout-Rand ist davon unberührt.
+- `ResultGrid` kennt `COLUMNS`: mehrere Wertpaare nebeneinander statt einer
+  langen Liste. Halbiert die Höhe des Blocks, sobald die Spalte breit genug
+  ist. Trennlinien gehen weiterhin über die volle Breite und beginnen eine
+  neue Zeile.
+- `NumberField.SPIN` und `IntField.SPIN` sagen, welches Spinfeld benutzt wird.
+  Eine Unterklasse trägt dort ihr eigenes ein — etwa eine engere Fassung für
+  ein dichtes Formular.
 - `HaloDropdown` achtet jetzt auf `setMinimumContentsLength()` samt
   `AdjustToMinimumContentsLengthWithIcon`, wie `QComboBox` es tut. Vorher
   richtete es sich immer nach seinem längsten Eintrag und ließ die Bremse ins

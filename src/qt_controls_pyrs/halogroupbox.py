@@ -192,8 +192,30 @@ class HaloGroupBox(QGroupBox):
         return QRectF(self.rect()).adjusted(0.5, top, -0.5, -0.5)
 
     def _apply_margins(self) -> None:
-        top = self._title_height() + self.PAD_TOP
-        self.setContentsMargins(self.PAD_X, int(round(top)), self.PAD_X, self.PAD_BOTTOM)
+        """Haelt den Inhalt vom Rahmen und von der Ueberschrift fern.
+
+        Gesetzt wird am LAYOUT und nicht am Widget. Der Unterschied ist nicht
+        akademisch: sobald irgendein Stylesheet eine Kastenangabe fuer dieses
+        Widget enthaelt - `margin`, `padding`, auch mit Wert 0 -, uebersteuert
+        Qt damit setContentsMargins(), und der Inhalt klebt am Rahmen. Genau
+        so ist es beim Einbau in eine Anwendung passiert, deren mitgeliefertes
+        dunkles Stylesheet QGroupBox ein `margin-top` gibt.
+
+        Ein Layout-Rand ist davon unberuehrt. Ohne Layout bleibt nur der Weg
+        ueber das Widget - besser als nichts.
+        """
+        top = int(round(self._title_height() + self.PAD_TOP))
+        layout = self.layout()
+        if layout is not None:
+            layout.setContentsMargins(self.PAD_X, top, self.PAD_X, self.PAD_BOTTOM)
+        else:
+            self.setContentsMargins(self.PAD_X, top, self.PAD_X, self.PAD_BOTTOM)
+
+    def setLayout(self, layout) -> None:  # noqa: N802 - Qt-Namensschema
+        # Das Layout kommt meist erst nach dem Erzeugen - die Raender muessen
+        # dann nachgereicht werden.
+        super().setLayout(layout)
+        self._apply_margins()
 
     def setTitle(self, title: str) -> None:
         super().setTitle(title)

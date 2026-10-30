@@ -93,13 +93,17 @@ class _HaloSpin:
 
         self.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
+        # Ohne Maustracking kommt mouseMoveEvent nur bei gedrueckter Taste an -
+        # der Pfeil unter dem Zeiger wuerde also nie aufleuchten.
+        self.setMouseTracking(True)
+
         edit = self.lineEdit()
         if edit is not None:
             edit.setPalette(palette)
             edit.setAutoFillBackground(False)
-            edit.setTextMargins(
-                self.ROOM + self.PAD, 0, self.ROOM + self._arrow_space(), 0
-            )
+            edit.setMouseTracking(True)
+            edit.setTextMargins(self.ROOM + self.PAD, 0, self.PAD, 0)
+            edit.installEventFilter(self)
 
         self._hover_anim = self._animation(b"hover", self.HOVER_MS, QEasingCurve.Type.OutExpo)
         self._focus_anim = self._animation(b"focus", self.FOCUS_MS, QEasingCurve.Type.OutCubic)
@@ -277,6 +281,42 @@ class _HaloSpin:
         width = (metrics.averageCharWidth() * self.MIN_CHARS
                  + 2 * self.PAD + self._arrow_space() + 2 * self.ROOM)
         return QSize(int(math.ceil(width)), self.HEIGHT + 2 * self.ROOM_Y)
+
+    def resizeEvent(self, event) -> None:
+        """Haelt das innere Eingabefeld von der Pfeilspalte fern.
+
+        Der eigentliche Fehler, den das behebt: QAbstractSpinBox legt sein
+        QLineEdit ueber die GANZE Flaeche, sobald Qts eigene Pfeile
+        abgeschaltet sind. Die gezeichneten Pfeile lagen damit unter einem
+        fremden Widget, und jeder Klick darauf landete im Textfeld - sichtbar
+        waren sie, druecken liess sich nichts.
+
+        Gefunden erst beim Einbau in eine Anwendung. Der Test hier schickte den
+        Klick mit qtbot.mouseClick direkt an das Spinfeld und sprang damit ueber
+        das Kindwidget hinweg - er prueft jetzt den Weg, den die Maus wirklich
+        nimmt.
+        """
+        super().resizeEvent(event)
+        edit = self.lineEdit()
+        if edit is None:
+            return
+        surface = self._surface()
+        links = int(round(surface.left()))
+        rechts = int(round(surface.right() - self._arrow_space()))
+        edit.setGeometry(links, 0, max(rechts - links, 0), self.height())
+
+    def eventFilter(self, obj, event):
+        """Laesst den Zeiger ueber dem Textfeld die Pfeile trotzdem verdunkeln.
+
+        Verlaesst die Maus die Pfeilspalte nach links, bekommt das Spinfeld
+        kein mouseMoveEvent mehr - dort liegt dann das Textfeld. Ohne diesen
+        Umweg bliebe der zuletzt beruehrte Pfeil hell stehen.
+        """
+        if obj is self.lineEdit() and event.type() in (
+            QEvent.Type.MouseMove, QEvent.Type.Enter
+        ):
+            self._light_arrows(0)
+        return super().eventFilter(obj, event)
 
     # ==============================
     # Maus, Schreibmarke, Schritte
