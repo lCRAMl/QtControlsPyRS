@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- `ImgBBClient` und `ReferenceThumb`: Upload-URL und Zeitlimit kommen vom
+  Programm (`upload_endpoint`, `timeout` bzw. `upload_timeout_s`). Ohne Angabe
+  gelten wie bisher `https://api.imgbb.com/1/upload` und 30 s.
+- Upload-Fehler sind ausführlich und mehrzeilig: oben die Ursache in Worten
+  (keine Verbindung, keine Antwort im Zeitlimit, HTTP-Status, ImgBB-Fehler),
+  darunter Datei und Größe, Ziel-URL, Zeitlimit, Dauer bis zum Fehler, die
+  technische Ausnahme und ein Hinweis, was zu tun ist. Der API-Key steht nie
+  darin. Eine Antwort ohne JSON führt nicht mehr zu „Unerwarteter Fehler“.
+
 - `HaloDropdown` achtet jetzt auf `setMinimumContentsLength()` samt
   `AdjustToMinimumContentsLengthWithIcon`, wie `QComboBox` es tut. Vorher
   richtete es sich immer nach seinem längsten Eintrag und ließ die Bremse ins

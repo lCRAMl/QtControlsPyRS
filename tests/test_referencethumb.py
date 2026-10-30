@@ -357,3 +357,31 @@ def test_startordner_des_dialogs(qtbot, monkeypatch, tmp_path):
     qtbot.addWidget(mit_ordner)
     mit_ordner.load_image_dialog()
     assert aufrufe[-1] == str(tmp_path)
+
+
+def test_upload_nutzt_uebergebene_url_und_zeitlimit(qtbot, monkeypatch, bilddatei):
+    from qt_controls_pyrs import referencethumb
+    from qt_controls_pyrs.imgbb import ImgBBNetworkError
+
+    erzeugt = {}
+    meldung = "Upload-Timeout: der Server hat nicht innerhalb von 90 s geantwortet.\nDatei: referenz.png"
+
+    class FakeClient:
+        """Merkt sich, womit er erzeugt wurde, und lässt den Upload scheitern."""
+
+        def __init__(self, api_key, timeout, upload_endpoint):
+            erzeugt.update(api_key=api_key, timeout=timeout, upload_endpoint=upload_endpoint)
+
+        def upload_image(self, path, progress_callback=None):
+            raise ImgBBNetworkError(meldung)
+
+    monkeypatch.setattr(referencethumb, "ImgBBClient", FakeClient)
+    thumb = ReferenceThumb(0, "key", upload_endpoint="https://example.org/up", upload_timeout_s=90)
+    qtbot.addWidget(thumb)
+
+    with qtbot.waitSignal(thumb.upload_failed, timeout=3000) as signal:
+        thumb._upload_to_imgbb(bilddatei)
+    thumb._worker.wait()
+
+    assert erzeugt == {"api_key": "key", "timeout": 90, "upload_endpoint": "https://example.org/up"}
+    assert signal.args == [0, meldung]       # die ganze Meldung kommt beim Programm an
