@@ -70,15 +70,10 @@ def test_netzwerkfehler_sind_ausfuehrlich(monkeypatch, bild, fehler, erste_zeile
     assert "Datei: referenz.png (2.0 MB, gesendet als Base64 2.7 MB)" in text
     assert "Ziel: https://example.org/upload" in text
     assert "Zeitlimit: 45 s je Netzwerkschritt, Dauer bis zum Fehler:" in text
-    assert f"Ursache: {type(fehler).__name__}: {fehler}" in text
-    assert "Hinweis:" in text
+    # Die technische Ursache ist die letzte Zeile — kein Hinweistext danach.
+    assert zeilen[-1] == f"Ursache: {type(fehler).__name__}: {fehler}"
+    assert len(zeilen) == 5
     assert "geheim" not in text            # der API-Key steht nie in der Meldung
-
-
-def test_timeout_hinweis_nennt_die_einstellung(monkeypatch, bild):
-    monkeypatch.setattr(imgbb.requests, "post", werfe(requests.exceptions.ReadTimeout("x")))
-    with pytest.raises(ImgBBNetworkError, match="upload_timeout_s in der config.ini"):
-        ImgBBClient("k").upload_image(bild)
 
 
 def test_http_fehler_mit_status_und_antwort(monkeypatch, bild):

@@ -7,9 +7,8 @@
   gelten wie bisher `https://api.imgbb.com/1/upload` und 30 s.
 - Upload-Fehler sind ausführlich und mehrzeilig: oben die Ursache in Worten
   (keine Verbindung, keine Antwort im Zeitlimit, HTTP-Status, ImgBB-Fehler),
-  darunter Datei und Größe, Ziel-URL, Zeitlimit, Dauer bis zum Fehler, die
-  technische Ausnahme und ein Hinweis, was zu tun ist. Der API-Key steht nie
-  darin. Eine Antwort ohne JSON führt nicht mehr zu „Unerwarteter Fehler“.
+  darunter Datei und Größe, Ziel-URL, Zeitlimit, Dauer bis zum Fehler und die
+  technische Ausnahme. Der API-Key steht nie darin. Eine Antwort ohne JSON führt nicht mehr zu „Unerwarteter Fehler“.
 
 - `HaloDropdown` achtet jetzt auf `setMinimumContentsLength()` samt
   `AdjustToMinimumContentsLengthWithIcon`, wie `QComboBox` es tut. Vorher

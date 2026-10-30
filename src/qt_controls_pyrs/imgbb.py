@@ -189,29 +189,20 @@ class ImgBBClient:
             summary = (
                 f"Upload-Timeout: keine Verbindung zum Server innerhalb von {self.timeout:g} s."
             )
-            hint = "Server nicht erreichbar, oder Netzwerk, Proxy oder Firewall blockieren."
         elif isinstance(exc, requests.exceptions.ReadTimeout):
             summary = (
                 f"Upload-Timeout: der Server hat nicht innerhalb von {self.timeout:g} s geantwortet."
             )
-            hint = (
-                "Bei großen Bildern oder langsamer Leitung das Zeitlimit erhöhen "
-                "(APIImageGenerator: upload_timeout_s in der config.ini)."
-            )
         elif isinstance(exc, requests.exceptions.Timeout):
             summary = f"Upload-Timeout überschritten ({self.timeout:g} s)."
-            hint = "Das Zeitlimit erhöhen oder die Verbindung prüfen."
         elif isinstance(exc, requests.exceptions.ConnectionError):
             summary = "Verbindungsfehler beim Upload."
-            hint = "Netzwerkverbindung, Upload-URL und Proxy prüfen."
         else:
             summary = "Netzwerkfehler beim Upload."
-            hint = "Upload-URL und Netzwerk prüfen."
 
         lines = [summary]
         lines += details
         lines.append(f"Ursache: {type(exc).__name__}: {exc}")
-        lines.append(f"Hinweis: {hint}")
         return "\n".join(lines)
 
     # ------------------------------------------------------------------
