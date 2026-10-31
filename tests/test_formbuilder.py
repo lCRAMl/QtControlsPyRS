@@ -159,3 +159,58 @@ def test_ein_hinweis_hat_eine_mindestbreite(qtbot):
     assert ui.h.wordWrap()
     assert ui.h.minimumWidth() == COMPACT_WRAP_WIDTH
     assert ui.h.property("role") == "note"
+
+
+# ----------------------------------------------------------------------
+# Die Abstaende
+# ----------------------------------------------------------------------
+
+def test_die_abstaende_kommen_aus_den_konstanten(qtbot):
+    """Wo man die Dichte eines Formulars einstellt - an genau drei Zahlen."""
+    from qt_controls_pyrs import (
+        COMPACT_GROUP_SPACING, COMPACT_SPACING, COMPACT_SPACING_X
+    )
+
+    widget, _ui = baue([
+        Gruppe("Eins", [[Zahl("a", "A", "mm")]]),
+        Gruppe("Zwei", [[Zahl("b", "B", "mm")]]),
+    ])
+    qtbot.addWidget(widget)
+
+    aussen = widget.layout()
+    assert aussen.spacing() == COMPACT_GROUP_SPACING
+
+    raster = aussen.itemAt(0).widget().layout()
+    assert raster.verticalSpacing() == COMPACT_SPACING
+    assert raster.horizontalSpacing() == COMPACT_SPACING_X
+
+
+def test_eine_andere_zahl_wirkt_auch(qtbot, monkeypatch):
+    """Der eigentliche Test.
+
+    Dass die Zahlen uebereinstimmen, koennte Zufall sein - beide sind 4. Hier
+    wird eine andere gesetzt, und das Formular muss sie uebernehmen. Genau das
+    ging vorher NICHT: COMPACT_SPACING stand im Modul, war exportiert und
+    dokumentiert, und die Abstaende waren daneben als 8, 4 und 6 fest
+    verdrahtet. Wer an der Konstanten drehte, sah nichts geschehen.
+    """
+    from qt_controls_pyrs import formbuilder
+
+    monkeypatch.setattr(formbuilder, "COMPACT_SPACING", 17)
+    monkeypatch.setattr(formbuilder, "COMPACT_SPACING_X", 23)
+    monkeypatch.setattr(formbuilder, "COMPACT_GROUP_SPACING", 29)
+
+    widget, _ui = baue([Gruppe("Probe", [[Zahl("a", "A", "mm")]])])
+    qtbot.addWidget(widget)
+
+    assert widget.layout().spacing() == 29
+    raster = widget.layout().itemAt(0).widget().layout()
+    assert raster.verticalSpacing() == 17
+    assert raster.horizontalSpacing() == 23
+
+
+def test_zwischen_gruppen_steht_mehr_luft_als_zwischen_zeilen(qtbot):
+    """Sonst sieht ein Formular aus wie eine einzige lange Liste."""
+    from qt_controls_pyrs import COMPACT_GROUP_SPACING, COMPACT_SPACING
+
+    assert COMPACT_GROUP_SPACING > COMPACT_SPACING

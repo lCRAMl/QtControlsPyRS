@@ -47,8 +47,24 @@ COMPACT_ROOM = 2
 #: Abstand der Schrift zum Rahmen.
 COMPACT_PAD = 8
 
-#: Abstand zwischen zwei Zeilen im Layout.
+#: Abstand zwischen zwei Zeilen eines Formulars, senkrecht.
+#:
+#: Das ist die Zahl, die ein Formular enger oder luftiger macht, ohne an den
+#: Bedienelementen selbst etwas zu aendern. Benutzt wird sie von
+#: :func:`qt_controls_pyrs.formbuilder.baue_gruppe`.
 COMPACT_SPACING = 4
+
+#: Abstand zwischen Beschriftung und Feld, waagerecht - und zwischen zwei
+#: Feldern, die nebeneinander in einer Zeile stehen.
+COMPACT_SPACING_X = 8
+
+#: Abstand zwischen zwei Gruppenrahmen und zwischen zwei Elementen einer
+#: freistehenden Zeile.
+#:
+#: Groesser als COMPACT_SPACING, und das mit Absicht: zwischen zwei Gruppen
+#: gehoert mehr Luft als zwischen zwei Zeilen derselben Gruppe, sonst sieht
+#: das Formular aus wie eine einzige lange Liste.
+COMPACT_GROUP_SPACING = 6
 
 #: Breite, bei der eine umbrechende Beschriftung umbricht.
 #:

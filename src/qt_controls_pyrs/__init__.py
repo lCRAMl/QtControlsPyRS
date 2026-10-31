@@ -90,8 +90,8 @@ from .checkboxes import (
     LineToggle
 )
 from .compact import (
-    COMPACT_HEIGHT, COMPACT_PAD, COMPACT_ROOM, COMPACT_SPACING,
-    COMPACT_WRAP_WIDTH, CompactButton, CompactCheckBox, CompactDoubleSpinBox,
+    COMPACT_GROUP_SPACING, COMPACT_HEIGHT, COMPACT_PAD, COMPACT_ROOM,
+    COMPACT_SPACING, COMPACT_SPACING_X, COMPACT_WRAP_WIDTH, CompactButton, CompactCheckBox, CompactDoubleSpinBox,
     CompactDropdown, CompactGroupBox, CompactIntField, CompactLineEdit,
     CompactNumberField, CompactRadioButton, CompactResultGrid,
     CompactSpinBox, StatusBarButton, WideResultGrid, compact_combo
@@ -124,10 +124,12 @@ __version__ = "0.3.0"
 __all__ = [
     "AnimatedToggle",
     "BusyHaloButton",
+    "COMPACT_GROUP_SPACING",
     "COMPACT_HEIGHT",
     "COMPACT_PAD",
     "COMPACT_ROOM",
     "COMPACT_SPACING",
+    "COMPACT_SPACING_X",
     "COMPACT_WRAP_WIDTH",
     "ClickableLabel",
     "CloseButton",

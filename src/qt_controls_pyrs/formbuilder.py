@@ -52,6 +52,7 @@ from PyQt6.QtWidgets import (
 )
 
 from .compact import (
+    COMPACT_GROUP_SPACING, COMPACT_SPACING, COMPACT_SPACING_X,
     COMPACT_WRAP_WIDTH, CompactButton, CompactCheckBox, CompactDropdown,
     CompactGroupBox, CompactIntField, CompactLineEdit, CompactNumberField,
     CompactRadioButton, CompactResultGrid, compact_combo
@@ -352,8 +353,8 @@ def baue_gruppe(gruppe: Gruppe, ziel: Oberflaeche) -> CompactGroupBox:
         setattr(ziel, gruppe.name, box)
 
     raster = QGridLayout(box)
-    raster.setHorizontalSpacing(8)
-    raster.setVerticalSpacing(4)
+    raster.setHorizontalSpacing(COMPACT_SPACING_X)
+    raster.setVerticalSpacing(COMPACT_SPACING)
 
     breiteste = max((len(zeile) for zeile in gruppe.zeilen), default=1)
 
@@ -418,7 +419,7 @@ def baue(gruppen: list[Gruppe], ziel: Oberflaeche | None = None) -> tuple[QWidge
     behaelter = QWidget()
     aussen = QVBoxLayout(behaelter)
     aussen.setContentsMargins(0, 0, 0, 0)
-    aussen.setSpacing(6)
+    aussen.setSpacing(COMPACT_GROUP_SPACING)
 
     for eintrag in gruppen:
         if isinstance(eintrag, Gruppe):
@@ -426,7 +427,7 @@ def baue(gruppen: list[Gruppe], ziel: Oberflaeche | None = None) -> tuple[QWidge
         elif isinstance(eintrag, Zeile):
             reihe = QHBoxLayout()
             reihe.setContentsMargins(0, 0, 0, 0)
-            reihe.setSpacing(6)
+            reihe.setSpacing(COMPACT_GROUP_SPACING)
             for baustein in eintrag.zellen:
                 label, widget = _zelle(baustein, ziel)
                 if label is not None:
