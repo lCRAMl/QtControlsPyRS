@@ -17,8 +17,13 @@
   wie „Teilweise aufliegende Sauger als tragend zählen" misst einzeilig über
   600 Pixel und zwang die ganze Bedienspalte auf diese Breite. Mit Umbruch sank
   deren Mindestbreite von 641 auf 386 Pixel.
-- `NumberField.NOTE_WIDTH` hält die Meldung unter dem Feld mindestens so breit,
-  dass sie nicht in eine Säule aus zwei Wörtern umbricht.
+- `NumberField.NOTE_WIDTH` hält die Meldung unter dem Feld so breit, dass sie
+  nicht in eine Säule aus zwei Wörtern umbricht — aber bescheiden, und mit
+  einer Größenrichtlinie, die den Inhalt ignoriert. Als volle Satzbreite
+  forderte jedes Zahlenfeld 200 Pixel allein für eine Zeile, die meistens leer
+  ist; in einem Formular mit zwei Feldern nebeneinander wuchs die Spalte
+  dadurch von 386 auf 842 Pixel. Eine Meldung ist ein Ausnahmezustand und darf
+  nicht bestimmen, wie breit das Feld im Normalfall sein muss.
 - `HaloSpinBox` und `HaloDoubleSpinBox`: die Pfeile ließen sich nicht drücken.
   QAbstractSpinBox legt sein `QLineEdit` über die GANZE Fläche, sobald Qts
   eigene Pfeile abgeschaltet sind — die gezeichneten Pfeile lagen damit unter

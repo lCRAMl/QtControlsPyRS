@@ -22,7 +22,7 @@ from __future__ import annotations
 from PyQt6.QtCore import QRectF, Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QPainter, QPalette, QPen
 from PyQt6.QtWidgets import (
-    QFrame, QGridLayout, QHBoxLayout, QLabel, QVBoxLayout, QWidget
+    QFrame, QGridLayout, QHBoxLayout, QLabel, QSizePolicy, QVBoxLayout, QWidget
 )
 
 from .buttons.hoverbuttons import _faded
@@ -127,14 +127,17 @@ class NumberField(_UnitField):
     NOTE_MIN_PT  = 7
     NOTE_HEIGHT  = 14         # reservierter Platz für die Meldung
 
-    #: Mindestbreite der Meldung. 0 heißt: nimm, was das Layout gibt.
+    #: Breite, für die die Meldung gesetzt wird — ihre WUNSCHbreite.
     #:
-    #: In einer schmalen Spalte bricht ein Satz wie „Ohne max. Stapellast wird
-    #: die Belastung nicht geprüft" sonst in eine Säule aus zwei Wörtern um und
-    #: reißt eine fingerbreite Lücke ins Formular. Qt schätzt die Höhe eines
-    #: umbrechenden Labels für die Breite, die es gerade bekommt — und das ist
-    #: in einem Raster wenig.
-    NOTE_WIDTH   = 200
+    #: Ausdrücklich keine Mindestbreite. Eine Meldung ist ein Ausnahmezustand;
+    #: sie darf nicht bestimmen, wie breit das Feld im Normalfall sein muss.
+    #: Mit einer Mindestbreite von 200 forderte jedes Zahlenfeld 200 Pixel
+    #: allein für eine Zeile, die meistens leer ist — bei zwei Feldern
+    #: nebeneinander also 400, und die Bedienspalte wuchs von 386 auf 842.
+    #:
+    #: Stattdessen bekommt die Meldung eine Größenrichtlinie, die ihren Inhalt
+    #: ignoriert: sie nimmt, was die Zeile ihr gibt, und bricht darin um.
+    NOTE_WIDTH   = 130
 
     def __init__(
         self,
@@ -166,8 +169,14 @@ class NumberField(_UnitField):
         self._message = QLabel("")
         self._message.setWordWrap(True)
         self._message.setMinimumHeight(self.NOTE_HEIGHT)
-        if self.NOTE_WIDTH:
-            self._message.setMinimumWidth(self.NOTE_WIDTH)
+        # Eine BESCHEIDENE Mindestbreite, nicht die volle Satzbreite: ohne sie
+        # bekommt die Meldung in einem engen Raster zwei Woerter je Zeile und
+        # wird achtzeilig; mit der vollen Satzbreite bestimmte sie, wie breit
+        # das Feld im Normalfall sein muss. Dazwischen liegt dieser Wert.
+        self._message.setMinimumWidth(self.NOTE_WIDTH)
+        self._message.setSizePolicy(
+            QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred
+        )
         font = self._message.font()
         font.setPointSize(max(self.NOTE_MIN_PT, font.pointSize() - self.NOTE_SHRINK))
         self._message.setFont(font)
