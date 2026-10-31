@@ -1,6 +1,6 @@
 import pytest
 from PyQt6.QtCore import QEvent, QPointF, Qt
-from PyQt6.QtGui import QEnterEvent
+from PyQt6.QtGui import QEnterEvent, QFontMetricsF
 from PyQt6.QtWidgets import QDoubleSpinBox, QSpinBox
 
 from qt_controls_pyrs import HaloDoubleSpinBox, HaloSpinBox
@@ -230,3 +230,64 @@ def test_gesperrt_wird_blass_gezeichnet(qtbot, paint, cls):
     feld.setEnabled(False)
     qtbot.waitUntil(lambda: feld.hover == 0.0, timeout=3000)
     paint(feld)
+
+
+def test_der_sondertext_passt_in_das_feld(qtbot):
+    """specialValueText ist das, was statt der Null dasteht.
+
+    textFromValue(minimum()) gibt ihn nicht zurueck, also fiel er aus der
+    Breitenrechnung heraus: das Feld war so breit wie "0", und zu sehen war
+    der rechte Rest des Sondertextes. In TRXing stand in einem Stueckzahlfeld
+    ":glich" statt "so viele wie moeglich".
+    """
+    feld = HaloSpinBox()
+    feld.setRange(0, 100000)
+    feld.setSpecialValueText("so viele wie moeglich")
+    qtbot.addWidget(feld)
+
+    feld.resize(feld.sizeHint())
+    feld.show()
+    qtbot.waitExposed(feld)
+
+    # Gemessen wird der Platz, der dem Text WIRKLICH bleibt: das innere
+    # Eingabefeld abzueglich seiner Textraender. Die blosse Breite des
+    # Spinfeldes genuegt nicht - zwischen beiden liegen die Pfeilspalte und
+    # zwei Raender, und genau deren Summe war einmal um zwei Bildpunkte zu
+    # klein. Zu wenig, um bei einer Zahl aufzufallen; genug, damit das Feld
+    # an den Textanfang scrollt und ":o viele wie moeglich" dasteht.
+    edit = feld.lineEdit()
+    raender = edit.textMargins()
+    platz = edit.width() - raender.left() - raender.right()
+    noetig = QFontMetricsF(edit.font()).horizontalAdvance(edit.text())
+
+    assert edit.text() == "so viele wie moeglich"
+    assert platz >= noetig, (
+        "der Sondertext hat " + str(round(noetig)) + " Bildpunkte noetig, "
+        "bekommt aber " + str(platz)
+    )
+
+
+def test_der_sondertext_ueberlebt_auch_eine_enge_spalte(qtbot):
+    """Ein Raster darf das Feld nicht unter seinen eigenen Text druecken.
+
+    sizeHint ist nur der Wunsch. Wird es eng, geht das Raster auf die
+    Mindestbreite herunter - und die kannte den Sondertext nicht. In TRXing
+    traf das die Saugeranzahl auf dem schmaleren Vakuumtab: 73 Bildpunkte fuer
+    einen Text, der 147 braucht.
+    """
+    feld = HaloSpinBox()
+    feld.setRange(0, 100000)
+    feld.setSpecialValueText("automatisch (maximal)")
+    qtbot.addWidget(feld)
+
+    feld.resize(feld.minimumSizeHint())
+    feld.show()
+    qtbot.waitExposed(feld)
+
+    edit = feld.lineEdit()
+    raender = edit.textMargins()
+    platz = edit.width() - raender.left() - raender.right()
+    noetig = QFontMetricsF(edit.font()).horizontalAdvance(edit.text())
+    assert platz >= noetig, (
+        "auf Mindestbreite bleiben nur " + str(platz) + " von " + str(round(noetig))
+    )

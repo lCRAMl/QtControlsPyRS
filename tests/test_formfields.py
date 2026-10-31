@@ -1,5 +1,5 @@
 import pytest
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import QColor, QFontMetricsF
 from PyQt6.QtWidgets import QFrame, QLabel
 
 from qt_controls_pyrs import (
@@ -216,3 +216,20 @@ def test_das_band_zeichnet_sich_selbst(qtbot, paint):
     assert isinstance(band, QFrame)
     assert band.styleSheet() == ""
     paint(band)
+
+
+def test_die_einheit_wird_nicht_abgeschnitten(qtbot):
+    """UNIT_WIDTH haelt Felder in Flucht - kuerzen darf es nicht.
+
+    setMinimumWidth() ist eine ausdrueckliche Vorgabe und schlaegt
+    minimumSizeHint(): in einer engen Spalte stand "Stuec" statt "Stueck".
+    Dieselbe Falle wie bei MIN_WIDTH des Spinfeldes.
+    """
+    feld = NumberField("Stueck")
+    qtbot.addWidget(feld)
+
+    etikett = feld.findChildren(QLabel)[0]
+    noetig = QFontMetricsF(etikett.font()).horizontalAdvance("Stueck")
+    assert etikett.minimumWidth() >= noetig, (
+        "die Einheit darf nicht unter ihren eigenen Text gedrueckt werden"
+    )

@@ -268,19 +268,62 @@ class _HaloSpin:
         return 0
 
     def sizeHint(self) -> QSize:
+        """Die Breite richtet sich nach dem laengsten Text, der erscheinen kann.
+
+        specialValueText() gehoert dazu. textFromValue(minimum()) gibt ihn
+        NICHT zurueck - es formatiert die Zahl, waehrend angezeigt wird, was
+        der Sondertext sagt. Wer einem Feld "automatisch (maximal)" als
+        Bedeutung der Null mitgibt, bekam sonst ein Feld in der Breite von
+        "0" und darin den rechten Rest des Textes: ":glich", "mal)".
+        """
         metrics = QFontMetricsF(self.font())
         texts = [self.textFromValue(self.minimum()), self.textFromValue(self.maximum())]
+        if self.specialValueText():
+            texts.append(self.specialValueText())
         widest = max((metrics.horizontalAdvance(t) for t in texts), default=0.0)
         widest = max(widest, metrics.averageCharWidth() * self.MIN_CHARS)
         widest += metrics.horizontalAdvance(self.prefix() + self.suffix())
-        width = widest + 2 * self.PAD + self._arrow_space() + 2 * self.ROOM
-        return QSize(int(math.ceil(width)), self.HEIGHT + 2 * self.ROOM_Y)
+        return QSize(int(math.ceil(widest + self._text_room())),
+                     self.HEIGHT + 2 * self.ROOM_Y)
+
+    def _text_room(self) -> float:
+        """Alles, was neben dem Text Platz braucht.
+
+        Dieselben Zahlen, die resizeEvent() und setTextMargins() verteilen -
+        und genau deshalb hier und nicht als Summe aus dem Gedaechtnis:
+
+            links    ROOM         bis zur gezeichneten Flaeche (resizeEvent)
+                   + ROOM + PAD   Textrand des inneren Feldes
+            rechts   PAD          Textrand des inneren Feldes
+                   + arrow_space  die Pfeilspalte
+                   + ROOM         bis zum Widgetrand
+
+        Vorher stand hier 2*PAD + 2*ROOM, also ein ROOM zu wenig. Zwei
+        Bildpunkte - zu wenig, um bei "1500" aufzufallen, aber genug, damit
+        ein Sondertext um zwei Bildpunkte nicht mehr passt und das Feld an
+        den Textanfang scrollt: zu lesen war ":o viele wie moeglich".
+        """
+        return 3 * self.ROOM + 2 * self.PAD + self._arrow_space()
 
     def minimumSizeHint(self) -> QSize:
+        """So schmal darf das Feld hoechstens werden.
+
+        Der Sondertext zaehlt auch hier mit und nicht nur in sizeHint(). Ein
+        Raster verteilt den vorhandenen Platz zwischen Wunsch- und
+        Mindestbreite; ist die Mindestbreite kleiner als der Text, schrumpft
+        das Feld unter ihn, sobald die Spalte eng wird - und zu lesen ist
+        wieder nur das Ende.
+
+        Eine Zahl kuerzt man zur Not, einen Satz nicht: "15" statt "1500"
+        faellt sofort auf, "(maximal)" statt "automatisch (maximal)" sieht aus
+        wie eine Angabe.
+        """
         metrics = QFontMetricsF(self.font())
-        width = (metrics.averageCharWidth() * self.MIN_CHARS
-                 + 2 * self.PAD + self._arrow_space() + 2 * self.ROOM)
-        return QSize(int(math.ceil(width)), self.HEIGHT + 2 * self.ROOM_Y)
+        width = metrics.averageCharWidth() * self.MIN_CHARS
+        if self.specialValueText():
+            width = max(width, metrics.horizontalAdvance(self.specialValueText()))
+        return QSize(int(math.ceil(width + self._text_room())),
+                     self.HEIGHT + 2 * self.ROOM_Y)
 
     def resizeEvent(self, event) -> None:
         """Haelt das innere Eingabefeld von der Pfeilspalte fern.

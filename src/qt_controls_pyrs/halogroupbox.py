@@ -203,19 +203,56 @@ class HaloGroupBox(QGroupBox):
 
         Ein Layout-Rand ist davon unberuehrt. Ohne Layout bleibt nur der Weg
         ueber das Widget - besser als nichts.
+
+        Traegt das Layout die Raender, werden die des Widgets auf Null
+        gesetzt. Sonst zaehlen beide, und der Inhalt sitzt doppelt so weit
+        innen wie gewollt - sichtbar nur dort, wo kein Stylesheet die
+        Widget-Raender ohnehin loescht. Zwei Fassungen derselben Anwendung
+        saehen damit verschieden aus.
         """
         top = int(round(self._title_height() + self.PAD_TOP))
         layout = self.layout()
         if layout is not None:
             layout.setContentsMargins(self.PAD_X, top, self.PAD_X, self.PAD_BOTTOM)
+            super().setContentsMargins(0, 0, 0, 0)
         else:
-            self.setContentsMargins(self.PAD_X, top, self.PAD_X, self.PAD_BOTTOM)
+            super().setContentsMargins(self.PAD_X, top, self.PAD_X, self.PAD_BOTTOM)
 
     def setLayout(self, layout) -> None:  # noqa: N802 - Qt-Namensschema
         # Das Layout kommt meist erst nach dem Erzeugen - die Raender muessen
         # dann nachgereicht werden.
         super().setLayout(layout)
         self._apply_margins()
+
+    def showEvent(self, event) -> None:
+        """Letzte Gelegenheit, die Raender richtigzustellen.
+
+        setLayout() ist nicht virtuell. `QGridLayout(box)` setzt das Layout
+        aus dem Konstruktor der Layoutklasse heraus, also aus C++ - die
+        Ueberschreibung darueber wird dabei nie gerufen, und der Rahmen
+        erfaehrt nichts von seinem Layout. Steht dann noch eine Kastenangabe
+        im Stylesheet, die die Widget-Raender aus dem Konstruktor loescht,
+        liegt die erste Zeile des Inhalts in der Ueberschrift.
+
+        Genau so ist es passiert, und zwar in jedem Rahmen einer Anwendung,
+        die ihre Formulare aus Beschreibungen baut. Deshalb hier und nicht
+        beim Aufrufer: welchen Weg jemand waehlt, um ein Layout zu setzen,
+        darf das Aussehen nicht entscheiden.
+
+        Nach dem Nachreichen wird das Layout von Hand aktiviert. Qt aktiviert
+        es NAMLICH VOR dem Show-Ereignis, nicht danach - eine hier erst
+        gesetzte Randangabe waere also schon zu spaet fuer die Geometrie und
+        kaeme erst mit der naechsten Runde der Ereignisschleife an. Beim
+        ersten Zeichnen stuende die Ueberschrift noch im Weg.
+        """
+        vorher = None
+        layout = self.layout()
+        if layout is not None:
+            vorher = layout.contentsMargins()
+        self._apply_margins()
+        if layout is not None and layout.contentsMargins() != vorher:
+            layout.activate()
+        super().showEvent(event)
 
     def setTitle(self, title: str) -> None:
         super().setTitle(title)

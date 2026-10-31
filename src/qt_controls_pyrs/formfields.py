@@ -63,12 +63,28 @@ class _UnitField(QWidget):
         self.spin.setFont(mono_font())
 
         self._unit = QLabel(unit)
-        self._unit.setMinimumWidth(self.UNIT_WIDTH)
+        self._set_unit_width()
         self._unit.setProperty("role", "unit")   # für Anwendungen mit eigenem Stylesheet
         palette = self._unit.palette()
         ink = palette.color(QPalette.ColorGroup.Normal, QPalette.ColorRole.WindowText)
         palette.setColor(QPalette.ColorRole.WindowText, _faded(ink, self.UNIT_ALPHA))
         self._unit.setPalette(palette)
+
+    def _lock_minimum_width(self) -> None:
+        """Fuehrt MIN_WIDTH und die eigene Mindestbreite des Spinfeldes zusammen.
+
+        setMinimumWidth() ist eine AUSDRUECKLICHE Vorgabe und schlaegt
+        minimumSizeHint(): ein Raster nimmt die 110 Bildpunkte von MIN_WIDTH
+        auch dann, wenn das Spinfeld selbst mehr braucht. Gebraucht hat es
+        mehr, sobald ein Sondertext darin steht - "automatisch (maximal)"
+        misst 147, das Feld bekam 73, und zu lesen war "mal)".
+
+        Deshalb das Maximum aus beidem. Aufzurufen, sobald sich aendert, was
+        das Feld anzeigen koennen muss.
+        """
+        self.spin.setMinimumWidth(
+            max(self.MIN_WIDTH, self.spin.minimumSizeHint().width())
+        )
 
     def _row(self) -> QHBoxLayout:
         row = QHBoxLayout()
@@ -82,8 +98,25 @@ class _UnitField(QWidget):
     def unit(self) -> str:
         return self._unit.text()
 
+    def _set_unit_width(self) -> None:
+        """UNIT_WIDTH ist die Untergrenze, nicht das Mass.
+
+        Dieselbe Falle wie bei MIN_WIDTH: setMinimumWidth() ist eine
+        ausdrueckliche Vorgabe und schlaegt minimumSizeHint(). Die Einheit
+        wurde damit auf UNIT_WIDTH zusammengedrueckt, sobald die Spalte eng
+        wurde - aus "Stueck" wurde "Stuec".
+
+        Die feste Breite bleibt sinnvoll, sie haelt "mm" und "kg"
+        untereinander in Flucht. Nur darf sie eine laengere Einheit nicht
+        kuerzen.
+        """
+        self._unit.setMinimumWidth(
+            max(self.UNIT_WIDTH, self._unit.minimumSizeHint().width())
+        )
+
     def setUnit(self, unit: str) -> None:  # noqa: N802 - Qt-Namensschema
         self._unit.setText(unit)
+        self._set_unit_width()
 
     def value(self):
         return self.spin.value()
@@ -156,8 +189,8 @@ class NumberField(_UnitField):
         spin.setSingleStep(step)
         spin.setValue(value)
         spin.setKeyboardTracking(True)
-        spin.setMinimumWidth(self.MIN_WIDTH)
         super().__init__(unit, spin, parent)
+        self._lock_minimum_width()
 
         self.spin.valueChanged.connect(self.value_changed.emit)
 
@@ -271,12 +304,12 @@ class IntField(_UnitField):
         spin = self.SPIN()
         spin.setRange(minimum, maximum)
         spin.setValue(value)
-        spin.setMinimumWidth(self.MIN_WIDTH)
         if special_zero_text:
             # Null bedeutet hier nicht „keine", sondern „automatisch". Ohne
             # Sondertext wäre das aus der Anzeige nicht zu erkennen.
             spin.setSpecialValueText(special_zero_text)
         super().__init__(unit, spin, parent)
+        self._lock_minimum_width()
 
         self.spin.valueChanged.connect(self.value_changed.emit)
 
@@ -307,6 +340,7 @@ class IntField(_UnitField):
             self.set_value(value)
         if special_zero_text:
             self.spin.setSpecialValueText(special_zero_text)
+            self._lock_minimum_width()
         if tooltip:
             self.spin.setToolTip(tooltip)
         return self

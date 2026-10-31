@@ -57,15 +57,83 @@ def test_ein_layout_laesst_sich_hineinsetzen(qtbot):
 # Rahmen, Ueberschrift und Inhalt
 # ----------------------------------------------------------------------
 
+def _inhaltsrand(gruppe: HaloGroupBox):
+    """Was den Inhalt tatsaechlich vom Rand fernhaelt.
+
+    Entweder die Raender des Widgets oder die des Layouts - welche von beiden,
+    entscheidet die Gruppe selbst (siehe _apply_margins). Geprueft wird hier
+    das Ergebnis und nicht der Weg: an welchem Objekt die Zahl steht, ist eine
+    Eigenheit von Qt und keine Zusage nach aussen.
+    """
+    layout = gruppe.layout()
+    return layout.contentsMargins() if layout is not None else gruppe.contentsMargins()
+
+
 def test_der_inhalt_liegt_im_rahmen_und_unter_der_ueberschrift(qtbot):
     gruppe = make(qtbot)
-    raender = gruppe.contentsMargins()
+    raender = _inhaltsrand(gruppe)
 
     assert raender.left() == gruppe.PAD_X
     assert raender.right() == gruppe.PAD_X
     assert raender.bottom() == gruppe.PAD_BOTTOM
     assert raender.top() >= gruppe._title_height(), (
         "Der Inhalt muesste unterhalb der Ueberschrift beginnen"
+    )
+
+
+def test_das_erste_element_liegt_nicht_in_der_ueberschrift(qtbot):
+    """Der Fehler, um den es geht - gemessen am Bildpunkt und nicht am Rand.
+
+    make() setzt das Layout mit `QVBoxLayout(gruppe)`. Dieser Weg laeuft durch
+    C++ und ruft setLayout() der Python-Seite nie; die Gruppe erfuhr also
+    nichts von ihrem Layout und liess die Raender am Widget stehen. Solange
+    kein Stylesheet mitredet, faellt das nicht auf.
+    """
+    gruppe = make(qtbot)
+    inhalt = gruppe.layout().itemAt(0).widget()
+
+    assert inhalt.y() >= gruppe._title_rect().bottom(), (
+        "Das erste Element liegt in der Ueberschrift"
+    )
+
+
+def test_auch_mit_kastenangabe_im_stylesheet_bleibt_der_kopf_frei(qtbot):
+    """Die Kastenangabe ist der eigentliche Gegner.
+
+    `margin`, `padding`, auch mit Wert 0: jede davon uebersteuert
+    setContentsMargins() des Widgets. Eine Anwendung braucht sie, um die
+    Vorgaben eines mitgelieferten dunklen Stylesheets fuer QGroupBox zu
+    loeschen - und loescht damit zugleich den Abstand, den die Gruppe fuer
+    ihre Ueberschrift braucht. Genau diese Verkettung hat in TRXing jeden
+    Rahmen getroffen.
+    """
+    gruppe = HaloGroupBox("Platte und Sauger")
+    gruppe.setStyleSheet("HaloGroupBox { margin-top: 0px; border: none; }")
+    layout = QVBoxLayout(gruppe)
+    layout.addWidget(QLabel("Inhalt"))
+    gruppe.resize(320, 140)
+    qtbot.addWidget(gruppe)
+    gruppe.show()
+    qtbot.waitExposed(gruppe)
+
+    inhalt = layout.itemAt(0).widget()
+    assert inhalt.y() >= gruppe._title_rect().bottom(), (
+        "Eine Kastenangabe im Stylesheet darf die Ueberschrift nicht zudecken"
+    )
+
+
+def test_die_raender_zaehlen_nicht_doppelt(qtbot):
+    """Widget UND Layout haetten beide Raender - der Inhalt sass doppelt tief.
+
+    Zu sehen war das nur ohne Stylesheet, weil eine Kastenangabe die
+    Widget-Raender ohnehin loescht. Zwei Fassungen derselben Anwendung saehen
+    damit verschieden aus, ohne dass im Quelltext ein Unterschied steht.
+    """
+    gruppe = make(qtbot)
+    widget_rand = gruppe.contentsMargins()
+
+    assert widget_rand.top() == 0 and widget_rand.left() == 0, (
+        "Traegt das Layout die Raender, muessen die des Widgets Null sein"
     )
 
 
