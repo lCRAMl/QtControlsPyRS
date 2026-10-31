@@ -12,19 +12,17 @@ hier als Zusage aufgeschrieben.
 from __future__ import annotations
 
 import pytest
-from PyQt6.QtCore import QCoreApplication
-from PyQt6.QtWidgets import QSplitter, QStatusBar
+from PyQt6.QtWidgets import QStatusBar
 
 from qt_controls_pyrs import (
     COMPACT_HEIGHT, COMPACT_WRAP_WIDTH, CompactButton, CompactCheckBox,
     CompactDoubleSpinBox, CompactDropdown, CompactGroupBox, CompactIntField,
     CompactLineEdit, CompactNumberField, CompactRadioButton,
-    CompactResultGrid, CompactSpinBox, Debouncer, HaloButton, HaloCheckBox,
+    CompactResultGrid, CompactSpinBox, HaloButton, HaloCheckBox,
     HaloDoubleSpinBox, HaloDropdown, HaloGroupBox, HaloLineEdit,
     HaloRadioButton, HaloSpinBox, IntField, NumberField, ResultGrid,
     StatusBarButton, WideResultGrid
 )
-from qt_controls_pyrs import windowstate
 
 
 #: Die Masse der Vorbilder, wie sie waren und bleiben sollen.
@@ -116,16 +114,9 @@ def test_die_leisten_knoepfe_halten_eine_statusleiste_flach(qtbot):
     assert eng.sizeHint().height() <= 40
 
 
-def test_die_umbruchbreite_gilt_fuer_kaestchen_und_hinweise():
-    """Dieselbe Kante, deshalb dieselbe Zahl.
-
-    Vorher stand die 240 an drei Stellen: im Kästchen, im Formularbau und als
-    eine dritte, von niemandem benutzte Konstante daneben.
-    """
-    from qt_controls_pyrs import formbuilder
-
+def test_die_umbruchbreite_gilt_fuer_das_kaestchen():
+    """Dieselbe Kante fuer Kaestchen und fuer Hinweistexte der Anwendung."""
     assert CompactCheckBox.WRAP_WIDTH == COMPACT_WRAP_WIDTH
-    assert formbuilder.COMPACT_WRAP_WIDTH == COMPACT_WRAP_WIDTH
 
 
 def test_das_breite_raster_hat_mehr_spalten_als_das_kompakte():
@@ -143,123 +134,3 @@ def test_die_eingabefelder_sind_so_hoch_wie_angegeben(qtbot):
         assert gemessen >= COMPACT_HEIGHT, klasse.__name__
         # Die Luft je Seite kommt dazu, mehr als das Doppelte ist zu viel.
         assert gemessen <= COMPACT_HEIGHT + 4 * klasse.ROOM, klasse.__name__
-
-
-# ----------------------------------------------------------------------
-# Debouncer
-# ----------------------------------------------------------------------
-
-def test_der_debouncer_sammelt_schnelle_aenderungen(qtbot):
-    aufrufe = []
-    bremse = Debouncer(lambda: aufrufe.append(1), delay_ms=50)
-
-    bremse.trigger()
-    bremse.trigger()
-    bremse.trigger()
-    assert bremse.pending
-    assert aufrufe == []
-
-    qtbot.wait(150)
-    assert aufrufe == [1], "drei Aenderungen muessen einen Aufruf ergeben"
-    assert not bremse.pending
-
-
-def test_abbrechen_verwirft_was_aussteht(qtbot):
-    aufrufe = []
-    bremse = Debouncer(lambda: aufrufe.append(1), delay_ms=50)
-    bremse.trigger()
-    bremse.cancel()
-    qtbot.wait(150)
-    assert aufrufe == []
-
-
-def test_sofort_ausloesen_holt_die_letzte_eingabe(qtbot):
-    aufrufe = []
-    bremse = Debouncer(lambda: aufrufe.append(1), delay_ms=5000)
-    bremse.trigger()
-    bremse.flush()
-    assert aufrufe == [1], "ohne flush() waere die letzte Eingabe verloren"
-    assert not bremse.pending
-
-    # Ohne etwas Ausstehendes passiert nichts - flush() ist kein Auslöser.
-    bremse.flush()
-    assert aufrufe == [1]
-
-
-# ----------------------------------------------------------------------
-# windowstate
-# ----------------------------------------------------------------------
-
-def test_ohne_anwendungsnamen_gibt_es_eine_klare_meldung(monkeypatch):
-    """Ein leerer Name ist kein brauchbarer Standardwert.
-
-    Unter einem leeren Namen landen die gemerkten Werte irgendwo in der
-    Registry, und niemand findet sie wieder, um sie zu löschen. Lieber eine
-    Meldung, die sagt, was zu tun ist.
-    """
-    monkeypatch.setattr(windowstate, "_application", "")
-    monkeypatch.setattr(QCoreApplication, "organizationName", staticmethod(lambda: ""))
-    monkeypatch.setattr(QCoreApplication, "applicationName", staticmethod(lambda: ""))
-
-    with pytest.raises(RuntimeError, match="set_application"):
-        windowstate.application()
-
-
-def test_der_gesetzte_name_schlaegt_den_von_qt(monkeypatch):
-    monkeypatch.setattr(windowstate, "_application", "")
-    monkeypatch.setattr(QCoreApplication, "organizationName", staticmethod(lambda: "VonQt"))
-    assert windowstate.application() == "VonQt"
-
-    windowstate.set_application("Ausdruecklich")
-    assert windowstate.application() == "Ausdruecklich"
-
-
-def test_eine_gemerkte_teilung_kommt_zurueck(qtbot, monkeypatch, tmp_path):
-    """Gespeichert wird der Zustand, nicht zwei Zahlen - siehe restore_splitter."""
-    from PyQt6.QtCore import QSettings
-    monkeypatch.setattr(windowstate, "_application", "")
-    windowstate.set_application("QtControlsPyRSTest")
-    QSettings.setDefaultFormat(QSettings.Format.IniFormat)
-    monkeypatch.setenv("HOME", str(tmp_path))
-
-    teiler = QSplitter()
-    teiler.addWidget(CompactLineEdit())
-    teiler.addWidget(CompactLineEdit())
-    qtbot.addWidget(teiler)
-    teiler.resize(400, 50)
-    teiler.setSizes([300, 100])
-
-    windowstate.save_splitter(teiler, "probe")
-
-    zweiter = QSplitter()
-    zweiter.addWidget(CompactLineEdit())
-    zweiter.addWidget(CompactLineEdit())
-    qtbot.addWidget(zweiter)
-    zweiter.resize(400, 50)
-    windowstate.restore_splitter(zweiter, "probe", fallback=[50, 350])
-
-    # Die Vorgabe darf nicht gewonnen haben.
-    assert zweiter.sizes()[0] > zweiter.sizes()[1]
-
-
-def test_ohne_gemerkte_teilung_gilt_die_vorgabe(qtbot, monkeypatch):
-    """Geprüft wird das Verhältnis, nicht der Bildpunkt.
-
-    Qt rechnet die Breite des Griffs von der verfügbaren Breite ab und verteilt
-    den Rest: aus 120/280 werden bei 400 Bildpunkten Breite 119/277. Auf
-    genaue Zahlen zu prüfen hiesse, die Griffbreite mitzuprüfen - und die
-    gehört zum Stil und nicht zu dieser Funktion.
-    """
-    monkeypatch.setattr(windowstate, "_application", "")
-    windowstate.set_application("QtControlsPyRSTestLeer")
-
-    teiler = QSplitter()
-    teiler.addWidget(CompactLineEdit())
-    teiler.addWidget(CompactLineEdit())
-    qtbot.addWidget(teiler)
-    teiler.resize(400, 50)
-
-    windowstate.restore_splitter(teiler, "nochnichtbenutzt", fallback=[120, 280])
-    links, rechts = teiler.sizes()
-    assert links + rechts >= 390, "die Breite muss vollstaendig verteilt sein"
-    assert rechts / links == pytest.approx(280 / 120, rel=0.05)

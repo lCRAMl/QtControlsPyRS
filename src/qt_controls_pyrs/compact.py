@@ -47,32 +47,41 @@ COMPACT_ROOM = 2
 #: Abstand der Schrift zum Rahmen.
 COMPACT_PAD = 8
 
+# Die drei folgenden Zahlen liest die Bibliothek selbst NICHT.
+#
+# Sie sagen, wieviel Luft ZWISCHEN den Elementen steht, und das entscheidet
+# das Layout der Anwendung. Sie stehen trotzdem hier, weil sie zu den Maßen
+# darüber gehören: wer COMPACT_HEIGHT ändert, will fast immer auch diese
+# Zahlen anpassen, und zwei Anwendungen sollen gleich dicht gesetzt sein.
+# Farben, Schriften und Abstände sind in jeder Sammlung die Stelle, an der ein
+# gemeinsames Aussehen anfängt.
+#
+# Wer sie benutzt, prüfe das mit einem eigenen Test. Eine Zahl, die niemand
+# liest, verstellt sich unbemerkt — genau das war hier schon einmal der Fall.
+
 #: Abstand zwischen zwei Zeilen eines Formulars, senkrecht.
 #:
 #: Das ist die Zahl, die ein Formular enger oder luftiger macht, ohne an den
-#: Bedienelementen selbst etwas zu aendern. Benutzt wird sie von
-#: :func:`qt_controls_pyrs.formbuilder.baue_gruppe`.
+#: Bedienelementen selbst etwas zu ändern.
 COMPACT_SPACING = 4
 
-#: Abstand zwischen Beschriftung und Feld, waagerecht - und zwischen zwei
+#: Abstand zwischen Beschriftung und Feld, waagerecht — und zwischen zwei
 #: Feldern, die nebeneinander in einer Zeile stehen.
 COMPACT_SPACING_X = 8
 
 #: Abstand zwischen zwei Gruppenrahmen und zwischen zwei Elementen einer
 #: freistehenden Zeile.
 #:
-#: Groesser als COMPACT_SPACING, und das mit Absicht: zwischen zwei Gruppen
-#: gehoert mehr Luft als zwischen zwei Zeilen derselben Gruppe, sonst sieht
+#: Größer als COMPACT_SPACING, und das mit Absicht: zwischen zwei Gruppen
+#: gehört mehr Luft als zwischen zwei Zeilen derselben Gruppe, sonst sieht
 #: das Formular aus wie eine einzige lange Liste.
 COMPACT_GROUP_SPACING = 6
 
 #: Breite, bei der eine umbrechende Beschriftung umbricht.
 #:
-#: Eine Zeile wie "Teilweise aufliegende Sauger als tragend zählen" misst
-#: einzeilig über 600 Bildpunkte und zwänge eine ganze Bedienspalte auf diese
-#: Breite - eine Rollfläche gibt die Mindestbreite ihres Inhalts nach außen
-#: weiter. Derselbe Wert gilt für Kästchen und für Hinweistexte, damit beide
-#: dieselbe Kante haben.
+#: Eine ausformulierte Beschriftung von acht Wörtern misst einzeilig über 600
+#: Bildpunkte und zwänge eine ganze Bedienspalte auf diese Breite - eine
+#: Rollfläche gibt die Mindestbreite ihres Inhalts nach außen weiter.
 COMPACT_WRAP_WIDTH = 240
 
 
@@ -241,7 +250,7 @@ def compact_combo(combo: QComboBox, min_chars: int = 12, tooltip: str = "") -> Q
     """Verhindert, dass ein langer Eintrag die ganze Spalte auseinanderzieht.
 
     ``QComboBox`` meldet als bevorzugte Breite die des längsten Eintrags. Ein
-    Eintrag wie "Rückschlagventil (schließt bei offenem Sauger)" macht damit
+    ausformulierter Eintrag von fünf oder sechs Wörtern macht damit
     das gesamte Formular so breit, dass es nicht mehr neben eine Zeichenfläche
     passt - und die Bedienspalte bekommt einen waagerechten Rollbalken.
 

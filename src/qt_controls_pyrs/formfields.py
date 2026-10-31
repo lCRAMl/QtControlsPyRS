@@ -367,7 +367,7 @@ class ResultGrid(HaloGroupBox):
     SPACING_X     = 14
     SPACING_Y     = 4
 
-    #: Wieviele Wertpaare nebeneinander stehen — die Vorgabe der Klasse.
+    #: Wieviele Wertpaare nebeneinander stehen.
     #:
     #: Eins ist die schlichte Liste: Beschriftung links, Wert rechts, eine
     #: Zeile je Wert. Zwei halbiert die Höhe des Blocks und macht ihn dafür
@@ -378,41 +378,29 @@ class ResultGrid(HaloGroupBox):
     #: Zwei Spalten haben einen Preis, der sich erst an einem langen Block
     #: zeigt: die Trennlinien gruppieren nicht mehr, weil eine Gruppe mitten in
     #: einer Rasterzeile endet und die nächste daneben weitergeht. Wer Gruppen
-    #: hat, nimmt eine Spalte.
+    #: hat, nimmt eine Unterklasse mit ``COLUMNS = 1``.
     COLUMNS = 1
 
     #: Abstand zwischen zwei Wertpaaren, wenn mehrere nebeneinander stehen.
     PAIR_GAP = 26
 
-    def __init__(self, title: str = "Ergebnis", parent: QWidget | None = None,
-                 *, columns: int | None = None) -> None:
-        """``columns`` übergeht die Vorgabe der Klasse für dieses eine Raster.
-
-        Gedacht für den Fall, dass dieselbe Anwendung einen Block zweispaltig
-        und einen einspaltig zeigt - eine eigene Unterklasse je Spaltenzahl
-        waere dafür viel Verpackung um eine Zahl.
-        """
+    def __init__(self, title: str = "Ergebnis", parent: QWidget | None = None) -> None:
         super().__init__(title, parent)
-        self._columns = max(self.COLUMNS if columns is None else columns, 1)
         self._grid = QGridLayout(self)
         self._apply_margins()   # die Raender der HaloGroupBox gelten fuer dieses Raster
         self._grid.setHorizontalSpacing(self.SPACING_X)
         self._grid.setVerticalSpacing(self.SPACING_Y)
-        for paar in range(self._columns):
+        for paar in range(max(self.COLUMNS, 1)):
             self._grid.setColumnStretch(2 * paar + 1, 1)
             if paar:
                 self._grid.setColumnMinimumWidth(2 * paar, self.PAIR_GAP)
         self._rows: dict[str, QLabel] = {}
         self._row_index = 0          # laufende Nummer der Zeile, nicht des Rasters
 
-    @property
-    def columns(self) -> int:
-        """Wieviele Wertpaare dieses Raster wirklich nebeneinander stellt."""
-        return self._columns
-
     def _cell(self) -> tuple[int, int]:
         """Rasterzeile und erste Rasterspalte für den nächsten Eintrag."""
-        return self._row_index // self._columns, 2 * (self._row_index % self._columns)
+        paare = max(self.COLUMNS, 1)
+        return self._row_index // paare, 2 * (self._row_index % paare)
 
     def _ink(self) -> QColor:
         return self.palette().color(
@@ -449,7 +437,7 @@ class ResultGrid(HaloGroupBox):
         # Eine Trennlinie geht IMMER ueber die volle Breite und beginnt eine
         # neue Zeile. Mitten in einer Zeile waere sie keine Trennung mehr,
         # sondern ein Strich zwischen zwei Werten.
-        paare = self._columns
+        paare = max(self.COLUMNS, 1)
         if self._row_index % paare:
             self._row_index += paare - (self._row_index % paare)
         zeile, _ = self._cell()

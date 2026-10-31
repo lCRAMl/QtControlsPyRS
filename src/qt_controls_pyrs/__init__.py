@@ -60,24 +60,8 @@ Eigenständige Widgets und Helfer, die sich wie ihre Qt-Vorbilder verhalten:
   Ergebnisraster, dazu :class:`StatusBarButton` und :class:`WideResultGrid`.
   Für Formulare mit dreißig Zeilen untereinander, wo die großzügigen Vorgaben
   zur Verschwendung werden. Die Vorbilder selbst bleiben unverändert.
-* :class:`Debouncer` – sammelt schnelle Änderungen zu einem Aufruf, damit
-  nicht jeder Tastendruck eine eigene Berechnung startet.
 * :func:`compact_combo` – begrenzt die Breite eines Auswahlfeldes auf eine
   Zeichenzahl, damit ein langer Eintrag nicht das ganze Formular aufzieht.
-
-Zwei Module bringen eine eigene Wortwahl mit und werden deshalb NICHT nach
-oben durchgereicht – ``Text``, ``Zahl`` oder ``store`` wären auf dieser Ebene
-zu allgemeine Namen:
-
-* :mod:`qt_controls_pyrs.formbuilder` – ein Formular als Liste von Zeilen
-  beschreiben statt als .ui-Datei zeichnen::
-
-      from qt_controls_pyrs.formbuilder import Gruppe, Zahl, baue
-
-* :mod:`qt_controls_pyrs.windowstate` – Fenstergröße und Teilerstellung
-  zwischen zwei Starts merken::
-
-      from qt_controls_pyrs.windowstate import restore_splitter, set_application
 """
 
 from .buttons import (
@@ -96,7 +80,6 @@ from .compact import (
     CompactNumberField, CompactRadioButton, CompactResultGrid,
     CompactSpinBox, StatusBarButton, WideResultGrid, compact_combo
 )
-from .debouncer import Debouncer
 from .dropdowns import HaloDropdown
 from .flashtaskbar import flash_taskbar, stop_flashing
 from .formfields import (
@@ -119,7 +102,7 @@ from .spinboxes import HaloDoubleSpinBox, HaloSpinBox
 from .statusbar import StatusBar
 from .tabs import HaloTabWidget
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 __all__ = [
     "AnimatedToggle",
@@ -145,7 +128,6 @@ __all__ = [
     "CompactResultGrid",
     "CompactSpinBox",
     "DashBorderButton",
-    "Debouncer",
     "ExpandBar",
     "FiberHaloButton",
     "FrameButton",
