@@ -55,6 +55,29 @@ Eigenständige Widgets und Helfer, die sich wie ihre Qt-Vorbilder verhalten:
   nachleuchtet; lädt die gewählte Datei zu ImgBB hoch und zeigt den Fortschritt.
 * :class:`PromptEditor` – Eingabefeld, das Abschnittsüberschriften hervorhebt.
 * :func:`flash_taskbar` – lässt den Taskleisten-Eintrag blinken (Windows).
+* ``Compact…`` – dichter gesetzte Fassungen von Knopf, Auswahlfeld,
+  Eingabefeld, Zahlenfeld, Gruppenrahmen, Kästchen, Auswahlknopf und
+  Ergebnisraster, dazu :class:`StatusBarButton` und :class:`WideResultGrid`.
+  Für Formulare mit dreißig Zeilen untereinander, wo die großzügigen Vorgaben
+  zur Verschwendung werden. Die Vorbilder selbst bleiben unverändert.
+* :class:`Debouncer` – sammelt schnelle Änderungen zu einem Aufruf, damit
+  nicht jeder Tastendruck eine eigene Berechnung startet.
+* :func:`compact_combo` – begrenzt die Breite eines Auswahlfeldes auf eine
+  Zeichenzahl, damit ein langer Eintrag nicht das ganze Formular aufzieht.
+
+Zwei Module bringen eine eigene Wortwahl mit und werden deshalb NICHT nach
+oben durchgereicht – ``Text``, ``Zahl`` oder ``store`` wären auf dieser Ebene
+zu allgemeine Namen:
+
+* :mod:`qt_controls_pyrs.formbuilder` – ein Formular als Liste von Zeilen
+  beschreiben statt als .ui-Datei zeichnen::
+
+      from qt_controls_pyrs.formbuilder import Gruppe, Zahl, baue
+
+* :mod:`qt_controls_pyrs.windowstate` – Fenstergröße und Teilerstellung
+  zwischen zwei Starts merken::
+
+      from qt_controls_pyrs.windowstate import restore_splitter, set_application
 """
 
 from .buttons import (
@@ -66,6 +89,14 @@ from .checkboxes import (
     AnimatedToggle, FrameToggle, HaloCheckBox, HaloRadioButton, HeartCheckBox,
     LineToggle
 )
+from .compact import (
+    COMPACT_HEIGHT, COMPACT_PAD, COMPACT_ROOM, COMPACT_SPACING,
+    COMPACT_WRAP_WIDTH, CompactButton, CompactCheckBox, CompactDoubleSpinBox,
+    CompactDropdown, CompactGroupBox, CompactIntField, CompactLineEdit,
+    CompactNumberField, CompactRadioButton, CompactResultGrid,
+    CompactSpinBox, StatusBarButton, WideResultGrid, compact_combo
+)
+from .debouncer import Debouncer
 from .dropdowns import HaloDropdown
 from .flashtaskbar import flash_taskbar, stop_flashing
 from .formfields import (
@@ -88,14 +119,31 @@ from .spinboxes import HaloDoubleSpinBox, HaloSpinBox
 from .statusbar import StatusBar
 from .tabs import HaloTabWidget
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 __all__ = [
     "AnimatedToggle",
     "BusyHaloButton",
+    "COMPACT_HEIGHT",
+    "COMPACT_PAD",
+    "COMPACT_ROOM",
+    "COMPACT_SPACING",
+    "COMPACT_WRAP_WIDTH",
     "ClickableLabel",
     "CloseButton",
+    "CompactButton",
+    "CompactCheckBox",
+    "CompactDoubleSpinBox",
+    "CompactDropdown",
+    "CompactGroupBox",
+    "CompactIntField",
+    "CompactLineEdit",
+    "CompactNumberField",
+    "CompactRadioButton",
+    "CompactResultGrid",
+    "CompactSpinBox",
     "DashBorderButton",
+    "Debouncer",
     "ExpandBar",
     "FiberHaloButton",
     "FrameButton",
@@ -135,9 +183,12 @@ __all__ = [
     "SpreadButton",
     "StaleBanner",
     "StatusBar",
+    "StatusBarButton",
     "ThumbOverlay",
     "UploadResult",
+    "WideResultGrid",
     "__version__",
+    "compact_combo",
     "flash_taskbar",
     "mono_font",
     "stop_flashing",
