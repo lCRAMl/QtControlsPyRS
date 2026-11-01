@@ -28,6 +28,12 @@ Eigenständige Widgets und Helfer, die sich wie ihre Qt-Vorbilder verhalten:
   dem weichgezeichneten Bild).
 * :class:`HaloPromptBox` – mehrzeilige Eingabe im Halo-Stil, die sich über
   den Inhalt darunter ausfahren lässt.
+* :class:`HaloChart` – Liniendiagramm mit glühenden Kurven, Gitter und
+  Lineal unter der Maus; dazu Markierungslinien und Bänder, waagerecht
+  wie senkrecht.
+* :class:`HaloSlider` – Schieberegler statt ``QSlider``: ein glühendes Band
+  vom Anfang bis zum Griff, der Griff ein Ring, der unter der Maus und beim
+  Ziehen heller wird.
 * :class:`HaloScrollBar` – Bildlaufleiste als glühendes Band, das sich beim
   Scrollen wellt; senkrecht wie waagerecht.
 * :class:`HaloTabWidget` – Reiter statt ``QTabWidget``; beim Wechsel gleitet
@@ -89,7 +95,9 @@ from .halogroupbox import HaloGroupBox
 from .haloimageview import HaloImageView
 from .halolineedit import HaloLineEdit
 from .halopromptbox import ExpandBar, HaloPromptBox
+from .charts import HaloChart
 from .haloscrollbar import HaloScrollBar
+from .sliders import HaloSlider
 from .imgbb import (
     ImgBBApiError, ImgBBClient, ImgBBError, ImgBBFileNotFoundError,
     ImgBBNetworkError, ImgBBUploadWorker, UploadResult
@@ -143,7 +151,9 @@ __all__ = [
     "HaloLineEdit",
     "HaloPromptBox",
     "HaloRadioButton",
+    "HaloChart",
     "HaloScrollBar",
+    "HaloSlider",
     "HaloSpinBox",
     "HaloTabWidget",
     "HeartCheckBox",

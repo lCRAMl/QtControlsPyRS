@@ -2,6 +2,28 @@
 
 ## Unreleased
 
+- Neu: `HaloChart`, ein Liniendiagramm ohne Qt-Vorbild. Kurven als
+  glühende Linien über einem zurückhaltenden Gitter; dazu
+  Markierungslinien (`add_rule`) und Bänder (`add_band`), beide waagerecht
+  wie senkrecht — ein Sollwert ist eine waagerechte Linie, ein
+  Sättigungsbereich ein waagerechtes Band. Die Achsen stellen sich selbst
+  ein und beziehen die Marken mit ein, damit ein Sollwert über allen
+  Messpunkten nicht aus dem Bild läuft. Unter der Maus steht ein Lineal mit
+  den Werten aller Kurven an dieser Stelle; außerhalb einer Kurve steht
+  nichts, statt sie zu verlängern. Es läuft kein Bildtakt mit.
+
+- Neu: `HaloSlider` statt `QSlider`. Eine vertiefte Schiene, darin ein
+  glühendes Band vom Anfang bis zum Griff, der Griff ein Ring, der unter der
+  Maus und beim Ziehen heller wird. Senkrecht wie waagerecht, und senkrecht
+  liegt das Minimum unten — wie bei Qt. Der Klick neben den Griff springt eine
+  Seite weiter, auch das wie bei Qt; wer lieber an die Zeigerstelle springt,
+  schaltet `set_jump_to_click(True)` ein.
+
+  Der Bildtakt läuft nur, solange sich die Helligkeit ändert — nicht,
+  solange die Maus darauf steht. Die erste Fassung machte den Unterschied
+  nicht und rechnete mit 16 ms weiter, sobald der Zeiger irgendwo auf dem
+  Regler liegenblieb, ohne dass sich ein Bildpunkt änderte.
+
 - `ImgBBClient` und `ReferenceThumb`: Upload-URL und Zeitlimit kommen vom
   Programm (`upload_endpoint`, `timeout` bzw. `upload_timeout_s`). Ohne Angabe
   gelten wie bisher `https://api.imgbb.com/1/upload` und 30 s.

@@ -22,7 +22,9 @@ from PyQt6.QtWidgets import (
 from qt_controls_pyrs import (
     AnimatedToggle, DashBorderButton, FiberHaloButton, FrameButton, FrameToggle,
     GlowButton, HaloButton, HaloCheckBox, HaloDoubleSpinBox, HaloDropdown,
-    HaloGroupBox, HaloLineEdit, HaloPromptBox, HaloRadioButton, HaloSpinBox,
+    HaloChart, HaloGroupBox, HaloLineEdit, HaloPromptBox, HaloRadioButton,
+    HaloSlider,
+    HaloSpinBox,
     HaloTabWidget, HeartCheckBox, LineToggle, PromptEditor, PulseHaloButton,
     RaisedButton, ReferenceThumb, ShineButton, SpreadButton, StatusBar
 )
@@ -219,6 +221,32 @@ class Demo(QWidget):
             lambda value: self.status.setText(f"Länge: {value} mm")
         )
         group_layout.addWidget(self.length_spin)
+
+        # HaloSlider: stufenlos von Hand, das Band leuchtet beim Ziehen auf.
+        # Der Klick daneben springt eine Seite weiter, wie bei QSlider; hier
+        # ist das Springen ans Ziel eingeschaltet, weil es sich bei einem
+        # Regler fuer eine Frequenz besser anfuehlt.
+        self.frequency_slider = HaloSlider()
+        self.frequency_slider.setRange(0, 100)
+        self.frequency_slider.setValue(50)
+        self.frequency_slider.setPageStep(10)
+        self.frequency_slider.set_jump_to_click(True)
+        group_layout.addWidget(self.frequency_slider)
+
+        # HaloChart: Kurven, eine Markierungslinie und ein Band. Der Regler
+        # darueber verschiebt die Linie, damit sich beides zusammen ansehen
+        # laesst.
+        self.chart = HaloChart()
+        self.chart.setMinimumHeight(170)
+        self.chart.set_labels("Zeit [s]", "Wert")
+        self.chart.add_band(70.0, 90.0, label="Bereich")
+        self.chart.add_rule(80.0, label="Sollwert")
+        self.chart.add_series("Verlauf", [(t / 10.0, 100.0 * (1.0 - 2.718 ** (-t / 12.0)))
+                                          for t in range(61)])
+        self.frequency_slider.valueChanged.connect(
+            lambda wert: self.chart.add_rule(float(wert)) or None
+        )
+        group_layout.addWidget(self.chart)
 
         # HaloDoubleSpinBox: dasselbe mit Nachkommastellen
         self.weight_spin = HaloDoubleSpinBox()

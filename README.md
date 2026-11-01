@@ -15,6 +15,8 @@ Bedienelemente für PyQt6, die sich nach außen wie ihre Qt-Vorbilder verhalten.
 | `HaloGroupBox` | `QGroupBox` | Rahmen um eine Gruppe; die Überschrift sitzt in einer Lücke im oberen Strich |
 | `HaloTabWidget` | `QTabWidget` | Reiter mit gleitendem Strich; beim Wechsel schiebt sich der Inhalt seitlich hinaus und der nächste herein |
 | `HaloPromptBox` | `QPlainTextEdit` | Eingabefeld im Halo-Stil, das sich über Leisten mit Pfeil über den Inhalt darunter ausfährt |
+| `HaloChart` | — | Liniendiagramm: glühende Kurven über zurückhaltendem Gitter, Markierungslinien und Bänder für Soll- und Bereichswerte, unter der Maus ein Lineal mit den Werten aller Kurven |
+| `HaloSlider` | `QSlider` | Schieberegler: glühendes Band vom Anfang bis zum Griff, der Griff ein Ring, der unter der Maus und beim Ziehen heller wird; senkrecht wie waagerecht |
 | `HaloScrollBar` | `QScrollBar` | Bildlaufleiste als glühendes Band, das sich beim Scrollen wellt; senkrecht wie waagerecht |
 | `HaloSpectrum` | — | Echtzeit-Spektrum des Systemtons: links der linke Kanal, rechts der rechte, 0 Hz in der Mitte |
 | `AnimatedToggle` | `QCheckBox` | Schiebeschalter mit gleitendem Knopf |

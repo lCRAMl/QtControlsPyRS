@@ -265,9 +265,21 @@ def test_einkanalige_quelle_wird_auf_beide_seiten_gelegt():
 
 
 def test_mittelung_beruhigt_das_bild(qtbot):
-    """Mit AVERAGE > 1 zählt nicht nur der letzte Block."""
-    spectrum = make(qtbot)
-    assert spectrum.AVERAGE >= 2
+    """Mit AVERAGE > 1 zählt nicht nur der letzte Block.
+
+    Die Mittelung wird hier in einer Unterklasse eingeschaltet und nicht von
+    der Vorgabe der Klasse erwartet — genauso wie das Gegenstück
+    ``test_ohne_mittelung_zaehlt_nur_der_letzte_block`` sie abschaltet.
+    Geprüft wird das Verhalten; ob die Vorgabe 1 oder 4 ist, entscheidet die
+    Klasse (``AVERAGE = 1`` heißt dort ausdrücklich „jeder für sich").
+    """
+    class Gemittelt(HaloSpectrum):
+        AVERAGE = 4
+
+    spectrum = Gemittelt()
+    qtbot.addWidget(spectrum)
+    spectrum.show()
+    qtbot.waitExposed(spectrum)
     treffer = band_fuer(spectrum, 1000.0)
 
     fuettern(spectrum, sinus(1000.0), stille())
