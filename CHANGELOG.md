@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- `ReferenceThumb`: neues Signal `image_selected(index, pfad)`, sobald ein Bild
+  geladen ist. Damit kann das Programm den Startordner des Dialogs nachführen,
+  etwa für alle Miniaturen gemeinsam auf den Ordner des zuletzt gewählten Bildes.
+
 - Neu: `HaloChart`, ein Liniendiagramm ohne Qt-Vorbild. Kurven als
   glühende Linien über einem zurückhaltenden Gitter; dazu
   Markierungslinien (`add_rule`) und Bänder (`add_band`), beide waagerecht

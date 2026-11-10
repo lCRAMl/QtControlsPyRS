@@ -385,3 +385,17 @@ def test_upload_nutzt_uebergebene_url_und_zeitlimit(qtbot, monkeypatch, bilddate
 
     assert erzeugt == {"api_key": "key", "timeout": 90, "upload_endpoint": "https://example.org/up"}
     assert signal.args == [0, meldung]       # die ganze Meldung kommt beim Programm an
+
+
+def test_gewaehltes_bild_wird_mit_pfad_gemeldet(qtbot, bilddatei):
+    thumb = make(qtbot)                 # ohne API-Key: kein Upload
+    with qtbot.waitSignal(thumb.image_selected, timeout=1000) as signal:
+        thumb.set_image(bilddatei)
+    assert signal.args == [2, bilddatei]
+
+
+def test_abgebrochener_dialog_meldet_kein_bild(qtbot, monkeypatch):
+    thumb = make(qtbot)
+    monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda *a, **k: ("", ""))
+    with qtbot.assertNotEmitted(thumb.image_selected):
+        thumb.load_image_dialog()

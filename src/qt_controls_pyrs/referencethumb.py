@@ -283,9 +283,13 @@ class ReferenceThumb(QWidget):
     gewartet wird; ohne Angabe gelten die Voreinstellungen von ImgBBClient.
     Schlägt der Upload fehl, meldet `upload_failed` eine mehrzeilige
     Beschreibung (Ursache, Datei, Ziel, Zeitlimit, Dauer).
+
+    `image_selected` meldet den Pfad jedes geladenen Bildes. Damit kann das
+    Programm etwa den Startordner des Dialogs nachführen (`setStartDir`).
     """
 
     cleared = Signal(int)
+    image_selected = Signal(int, str)   # Index, Pfad der gewählten Datei
     uploaded = Signal(int, str)
     upload_failed = Signal(int, str)
 
@@ -386,6 +390,7 @@ class ReferenceThumb(QWidget):
         # Steht die Maus wirklich darauf, deckt sie sich gleich auf — das X
         # dreht sich dann direkt nach dem Laden aus.
         self._sync_pointer()
+        self.image_selected.emit(self.index, path)
         self._upload_to_imgbb(path)
 
     def clear(self) -> None:
