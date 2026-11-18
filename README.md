@@ -14,6 +14,7 @@ Bedienelemente für PyQt6, die sich nach außen wie ihre Qt-Vorbilder verhalten.
 | `HaloSpinBox`, `HaloDoubleSpinBox` | `QSpinBox`, `QDoubleSpinBox` | Zahlenfelder mit zwei feinen Pfeilen rechts; der benutzte blitzt in der Signalfarbe auf |
 | `HaloGroupBox` | `QGroupBox` | Rahmen um eine Gruppe; die Überschrift sitzt in einer Lücke im oberen Strich |
 | `HaloCommandBar` | `QToolBar` | Befehlsleiste wie ein Menüband: Gruppen mit Überschrift, große und kleine Knöpfe an `QAction`s; wird das Fenster schmal, fallen erst die Beschriftungen |
+| `HaloDialog`, `HaloMessageBox` | `QDialog`, `QMessageBox` | Dialog und Rückfrage ohne Windows-Rahmen: eigene Titelleiste zum Verschieben, feiner Rahmen mit Schein, Knöpfe mit eigener Beschriftung |
 | `HaloTabWidget` | `QTabWidget` | Reiter mit gleitendem Strich; beim Wechsel schiebt sich der Inhalt seitlich hinaus und der nächste herein |
 | `HaloPromptBox` | `QPlainTextEdit` | Eingabefeld im Halo-Stil, das sich über Leisten mit Pfeil über den Inhalt darunter ausfährt |
 | `HaloChart` | — | Liniendiagramm: glühende Kurven über zurückhaltendem Gitter, Markierungslinien und Bänder für Soll- und Bereichswerte, unter der Maus ein Lineal mit den Werten aller Kurven |
@@ -55,7 +56,7 @@ qt_controls_pyrs/
     dropdowns/    HaloDropdown
     spinboxes/    HaloSpinBox, HaloDoubleSpinBox
     tabs/         HaloTabWidget
-    formfields.py, halocommandbar.py, halogroupbox.py, halolineedit.py, statusbar.py,
+    formfields.py, halocommandbar.py, halodialog.py, halogroupbox.py, halolineedit.py, statusbar.py,
     referencethumb.py, halopromptbox.py, haloscrollbar.py, halospectrum.py,
     audiosource.py, imgbb.py, prompt_editor.py, flashtaskbar.py
 ```
@@ -360,6 +361,51 @@ Am Knopf (`HaloToolButton`): `ICON_LARGE`, `ICON_SMALL`, `LARGE_H`, `SMALL_H`,
 `SMALL_ROWS`, `COLUMN_GAP`, `ROW_GAP`, `CAPTION_H`, `CAPTION_ALPHA`,
 `CAPTION_SCALE`. An der Leiste: `PAD_X`, `PAD_Y`, `GROUP_SPACING`,
 `SEPARATOR_ALPHA`, `BASE_ALPHA`.
+
+## HaloDialog und HaloMessageBox
+
+```python
+from qt_controls_pyrs import HaloDialog, HaloMessageBox
+
+answer = HaloMessageBox.ask(
+    self, "Muster löschen", "Muster 7 löschen?",
+    "Die SPS kann PatternId 7 verwenden.", kind="warning",
+    buttons=(("delete", "Löschen"), ("cancel", "Abbrechen")), default="cancel")
+if answer == "delete":
+    ...
+```
+
+Dialoge ohne den Fensterrahmen des Betriebssystems. `HaloDialog` ist ein
+`QDialog` mit eigener schmaler Titelleiste - Überschrift links, ein X rechts,
+das unter der Maus rot hinterlegt wird -, darunter die Fläche für den Inhalt
+und ringsum ein feiner Rahmen mit weichem Schein, derselbe Strich wie bei den
+Halo-Knöpfen. Verschoben wird an der Titelleiste. `exec()`, `accept()` und
+`reject()` bleiben die von `QDialog`: Escape und das X brechen ab, Enter löst
+den Standardknopf aus.
+
+Der Inhalt gehört auf `dialog.body`, nicht auf den Dialog selbst - um die
+Fläche liegen Titelleiste, Rahmen und der durchsichtige Rand für den Schein:
+
+```python
+dialog = HaloDialog("Optionen", self)
+form = QFormLayout(dialog.body)
+form.addRow("Raster", feld)
+```
+
+`HaloMessageBox` ist darauf die Rückfrage, die sonst `QMessageBox` wäre: ein
+Symbol für die Art (`"info"`, `"question"`, `"warning"`, `"error"`), fett der
+Text, darunter der Zusatztext, rechts unten die Knöpfe. Knöpfe sind Paare aus
+Schlüssel und Beschriftung; `ask()` gibt den Schlüssel zurück, oder `None`,
+wenn mit Escape oder X geschlossen wurde - das zählt wie Abbrechen. Mit
+`details` (etwa einem Traceback) erscheint links ein Knopf, der die
+Einzelheiten in fester Laufweite aufklappt.
+
+Dateidialoge bleiben bewusst die des Betriebssystems: Favoriten,
+Netzlaufwerke und Suche bietet nur er.
+
+Einstellbar: am Dialog `SHADOW`, `RADIUS`, `OUTLINE_ALPHA`, `GLOW_ALPHA`,
+`BASE_ALPHA`, `PAD`; an der Rückfrage `KINDS` (Zeichen und Farbe je Art),
+`TEXT_WIDTH` und `DETAILS_TEXT`.
 
 ## HaloTabWidget
 

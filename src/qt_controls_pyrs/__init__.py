@@ -24,6 +24,9 @@ Eigenständige Widgets und Helfer, die sich wie ihre Qt-Vorbilder verhalten:
 * :class:`HaloCommandBar` – Befehlsleiste wie ein Menüband: Gruppen mit
   Überschrift, große und kleine Knöpfe (:class:`HaloToolButton`), alle an
   einer ``QAction``; wird das Fenster schmal, fallen erst die Beschriftungen.
+* :class:`HaloDialog`, :class:`HaloMessageBox` – Dialog und Rückfrage ohne
+  Windows-Rahmen: eigene Titelleiste, feiner Rahmen mit Schein, Knöpfe mit
+  eigener Beschriftung.
 * :class:`HaloGroupBox` – Gruppenrahmen statt ``QGroupBox``; die
   Überschrift sitzt in einer Lücke im oberen Strich.
 * :class:`HaloImageView` – Bildvorschau mit dem Rahmen der HaloPromptBox,
@@ -95,6 +98,7 @@ from .formfields import (
     IntField, MONO_FAMILY, NumberField, ResultGrid, StaleBanner, mono_font
 )
 from .halocommandbar import HaloCommandBar, HaloCommandGroup, HaloToolButton, tinted_pixmap
+from .halodialog import HaloDialog, HaloMessageBox
 from .halogroupbox import HaloGroupBox
 from .haloimageview import HaloImageView
 from .halolineedit import HaloLineEdit
@@ -177,11 +181,13 @@ __all__ = [
     "HaloCheckBox",
     "HaloCommandBar",
     "HaloCommandGroup",
+    "HaloDialog",
     "HaloDoubleSpinBox",
     "HaloDropdown",
     "HaloGroupBox",
     "HaloImageView",
     "HaloLineEdit",
+    "HaloMessageBox",
     "HaloPromptBox",
     "HaloRadioButton",
     "HaloChart",

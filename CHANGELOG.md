@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Neu: `HaloDialog` und `HaloMessageBox` - Dialog und Rückfrage ohne
+  Windows-Rahmen. Eigene Titelleiste zum Verschieben mit X, feiner Rahmen mit
+  Schein, Escape bricht ab, Enter löst den Standardknopf aus. Die Rückfrage
+  zeigt ein Symbol je Art (info, question, warning, error), Text und
+  Zusatztext, Knöpfe mit eigener Beschriftung (`ask()` liefert den Schlüssel,
+  `None` bei Abbruch) und auf Wunsch aufklappbare Einzelheiten. Gebraucht für
+  LayerForge, wo die Rückfragen nicht im Windows-Stil erscheinen sollten.
+
 - Neu: `HaloCommandBar`, eine Befehlsleiste wie ein Menüband. Gruppen mit
   Überschrift, große Knöpfe (Symbol über der Schrift) und kleine, die sich zu
   zweit stapeln; jeder Knopf (`HaloToolButton`) folgt einer `QAction` samt
