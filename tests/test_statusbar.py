@@ -115,3 +115,80 @@ def test_keine_maptowarnung_vor_dem_layout(qtbot):
         qInstallMessageHandler(previous)
 
     assert not [m for m in messages if "mapTo" in m]
+
+
+# ==============================
+# Stufen und Einzelheiten
+# ==============================
+
+def _schriftfarbe(bar) -> str:
+    from PyQt6.QtGui import QPalette
+    return bar._label.palette().color(QPalette.ColorRole.WindowText).name()
+
+
+def test_warnung_und_fehler_faerben_schrift_und_balken(qtbot, host, paint):
+    bar = make(qtbot, host)
+
+    bar.show_message("Achtung", "warning")
+    assert bar.level() == "warning"
+    assert _schriftfarbe(bar) == bar.WARNING_COLOR
+    assert bar._mark.isVisible()
+    paint(bar)
+
+    bar.show_message("Kaputt", "error")
+    assert _schriftfarbe(bar) == bar.ERROR_COLOR
+    assert bar._mark.isVisible()
+    paint(bar)
+
+
+def test_settext_setzt_die_stufe_zurueck(qtbot, host):
+    window, _slot = host
+    bar = make(qtbot, host)
+    normal = _schriftfarbe(bar)
+
+    bar.show_message("Kaputt", "error", details="Traceback ...")
+    bar.setText("Bereit")
+
+    assert bar.level() == "info"
+    assert bar.details() == ""
+    assert _schriftfarbe(bar) == normal
+    assert not bar._mark.isVisible()
+    assert not bar._details_button.isVisible()
+
+
+def test_info_folgt_einer_spaeteren_fensterpalette(qtbot, host):
+    """Nach einer Warnung darf die Schrift nicht auf alter Farbe festkleben."""
+    from PyQt6.QtGui import QColor, QPalette
+
+    window, _slot = host
+    bar = make(qtbot, host)
+    bar.show_message("Achtung", "warning")
+    bar.show_message("Wieder gut")
+
+    palette = window.palette()
+    palette.setColor(QPalette.ColorRole.WindowText, QColor("#123456"))
+    window.setPalette(palette)
+
+    assert _schriftfarbe(bar) == "#123456"
+
+
+def test_details_knopf_nur_mit_einzelheiten_und_meldet_beides(qtbot, host):
+    bar = make(qtbot, host)
+
+    bar.show_message("Kurz", "warning")
+    assert not bar._details_button.isVisible()
+
+    bar.show_message("Export fehlgeschlagen", "error", details="Traceback: xyz")
+    assert bar._details_button.isVisible()
+
+    with qtbot.waitSignal(bar.details_requested, timeout=1000) as blocker:
+        bar._details_button.click()
+    assert blocker.args == ["Export fehlgeschlagen", "Traceback: xyz"]
+
+
+def test_unbekannte_stufe_wird_abgelehnt(qtbot, host):
+    import pytest
+
+    bar = make(qtbot, host)
+    with pytest.raises(ValueError):
+        bar.show_message("x", "fatal")

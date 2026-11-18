@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from PyQt6.QtCore import (
-    QAbstractAnimation, QEasingCurve, QEvent, QPoint, QPropertyAnimation, QRect, Qt, QTimer
+    QAbstractAnimation, QEasingCurve, QEvent, QPoint, QPropertyAnimation, QRect, Qt, QTimer,
+    pyqtSignal
 )
+from PyQt6.QtGui import QColor, QPalette
 from PyQt6.QtWidgets import (
     QFrame, QHBoxLayout, QLabel, QScrollArea, QToolButton, QVBoxLayout, QWidget
 )
@@ -23,6 +25,13 @@ class StatusBar(QFrame):
     Nach `HOLD_MS` klappt die Anzeige wieder auf eine Zeile zusammen. Passt der
     Text dann nicht mehr hinein, erscheinen rechts zwei kleine Scroll-Pfeile;
     ein Klick auf die Zeile klappt sie erneut auf.
+
+    `show_message()` kennt drei Stufen: ``"info"`` sieht aus wie `setText()`,
+    ``"warning"`` und ``"error"`` färben die Schrift und setzen links einen
+    schmalen Balken in derselben Farbe — eine Warnung soll man auch aus dem
+    Augenwinkel bemerken. Wer technische Einzelheiten mitgibt (`details`),
+    bekommt rechts einen Knopf dafür; ein Klick meldet `details_requested`.
+    Was dann erscheint, entscheidet die Anwendung.
     """
 
     LINE_HEIGHT = 20     # Höhe einer Textzeile
@@ -30,17 +39,45 @@ class StatusBar(QFrame):
     HOLD_MS     = 8000   # so lange bleibt eine lange Meldung offen
     ANIM_MS     = 180
 
+    LEVELS        = ("info", "warning", "error")
+    WARNING_COLOR = "#f0b429"   # Bernstein: auf Dunkel wie auf Hell lesbar
+    ERROR_COLOR   = "#ff4d4d"   # dasselbe Rot wie das Blinken des HaloDropdown
+    MARK_W        = 3           # Breite des Balkens links
+    DETAILS_TEXT  = "Details…"
+
+    #: (Meldung, Einzelheiten) — der Knopf „Details“ wurde gedrückt.
+    details_requested = pyqtSignal(str, str)
+
     def __init__(self, slot: QWidget, parent: QWidget) -> None:
         super().__init__(parent)
         self._slot = slot          # Platzhalter im Layout, gibt Position und Breite vor
         self._expanded = False
+        self._level = "info"
+        self._details = ""
 
         self.setFrameShape(QFrame.Shape.NoFrame)
         self.setAutoFillBackground(True)   # deckt den Inhalt darunter ab
 
+        self._mark = QFrame(self)
+        self._mark.setFixedWidth(self.MARK_W)
+        self._mark.setAutoFillBackground(True)
+        self._mark.hide()
+
         self._label = QLabel("")
         self._label.setWordWrap(True)
         self._label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+
+        self._details_button = QToolButton(self)
+        self._details_button.setText(self.DETAILS_TEXT)
+        self._details_button.setAutoRaise(True)
+        self._details_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        # Die Statuszeile soll dem Programm nie die Tastatur wegnehmen.
+        self._details_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self._details_button.setFixedHeight(self.LINE_HEIGHT)
+        self._details_button.clicked.connect(
+            lambda: self.details_requested.emit(self._label.text(), self._details)
+        )
+        self._details_button.hide()
 
         self._scroll = QScrollArea()
         self._scroll.setWidget(self._label)
@@ -62,8 +99,10 @@ class StatusBar(QFrame):
         row = QHBoxLayout(self)
         row.setContentsMargins(0, 0, 0, 0)
         row.setSpacing(4)
+        row.addWidget(self._mark)
         row.addWidget(self._scroll, 1)
         row.addLayout(arrows)
+        row.addWidget(self._details_button, 0, Qt.AlignmentFlag.AlignTop)
 
         self._hold_timer = QTimer(self)
         self._hold_timer.setSingleShot(True)
@@ -91,6 +130,42 @@ class StatusBar(QFrame):
     # ==============================
 
     def setText(self, text: str) -> None:
+        self.show_message(text)
+
+    def show_message(self, text: str, level: str = "info", details: str = "") -> None:
+        """Meldung mit Stufe (`LEVELS`) und optionalen technischen Einzelheiten."""
+        if level not in self.LEVELS:
+            raise ValueError(f"unbekannte Stufe {level!r}, erlaubt: {self.LEVELS}")
+        self._level = level
+        self._details = details
+        self._apply_level()
+        self._details_button.setVisible(bool(details))
+        self._show_text(text)
+
+    def level(self) -> str:
+        return self._level
+
+    def details(self) -> str:
+        return self._details
+
+    def _apply_level(self) -> None:
+        color = {"warning": self.WARNING_COLOR, "error": self.ERROR_COLOR}.get(self._level)
+        if color is None:
+            # Eine leere Palette löst alle Rollen wieder auf — die Schrift folgt
+            # dann wieder dem Fenster, auch nach einem späteren Wechsel von
+            # Hell auf Dunkel.
+            self._label.setPalette(QPalette())
+            self._mark.hide()
+            return
+        palette = self._label.palette()
+        palette.setColor(QPalette.ColorRole.WindowText, QColor(color))
+        self._label.setPalette(palette)
+        mark = self._mark.palette()
+        mark.setColor(QPalette.ColorRole.Window, QColor(color))
+        self._mark.setPalette(mark)
+        self._mark.show()
+
+    def _show_text(self, text: str) -> None:
         self._label.setText(text)
         self.setToolTip(text)      # vollständige Meldung beim Überfahren
         self._scroll.verticalScrollBar().setValue(0)

@@ -21,6 +21,9 @@ Eigenständige Widgets und Helfer, die sich wie ihre Qt-Vorbilder verhalten:
   geschrieben wird.
 * :class:`HaloSpinBox`, :class:`HaloDoubleSpinBox` – Zahlenfelder statt
   ``QSpinBox`` und ``QDoubleSpinBox``, mit zwei feinen Pfeilen rechts.
+* :class:`HaloCommandBar` – Befehlsleiste wie ein Menüband: Gruppen mit
+  Überschrift, große und kleine Knöpfe (:class:`HaloToolButton`), alle an
+  einer ``QAction``; wird das Fenster schmal, fallen erst die Beschriftungen.
 * :class:`HaloGroupBox` – Gruppenrahmen statt ``QGroupBox``; die
   Überschrift sitzt in einer Lücke im oberen Strich.
 * :class:`HaloImageView` – Bildvorschau mit dem Rahmen der HaloPromptBox,
@@ -91,6 +94,7 @@ from .flashtaskbar import flash_taskbar, stop_flashing
 from .formfields import (
     IntField, MONO_FAMILY, NumberField, ResultGrid, StaleBanner, mono_font
 )
+from .halocommandbar import HaloCommandBar, HaloCommandGroup, HaloToolButton, tinted_pixmap
 from .halogroupbox import HaloGroupBox
 from .haloimageview import HaloImageView
 from .halolineedit import HaloLineEdit
@@ -98,17 +102,44 @@ from .halopromptbox import ExpandBar, HaloPromptBox
 from .charts import HaloChart
 from .haloscrollbar import HaloScrollBar
 from .sliders import HaloSlider
-from .imgbb import (
-    ImgBBApiError, ImgBBClient, ImgBBError, ImgBBFileNotFoundError,
-    ImgBBNetworkError, ImgBBUploadWorker, UploadResult
-)
 from .prompt_editor import PromptEditor, PromptHighlighter
-from .referencethumb import (
-    ClickableLabel, CloseButton, ReferenceThumb, ThumbOverlay
-)
 from .spinboxes import HaloDoubleSpinBox, HaloSpinBox
 from .statusbar import StatusBar
 from .tabs import HaloTabWidget
+
+# Der ImgBB-Upload und die Miniatur, die ihn benutzt, werden erst beim ersten
+# Zugriff geladen. Sie ziehen `requests` nach, und das allein kostet beim Start
+# rund 180 ms — mehr als der ganze Rest der Sammlung. Wer sie nicht benutzt,
+# soll das nicht bezahlen. Von außen ändert sich nichts:
+# `from qt_controls_pyrs import ReferenceThumb` geht weiterhin (PEP 562).
+_LAZY = {
+    "ImgBBApiError": "imgbb",
+    "ImgBBClient": "imgbb",
+    "ImgBBError": "imgbb",
+    "ImgBBFileNotFoundError": "imgbb",
+    "ImgBBNetworkError": "imgbb",
+    "ImgBBUploadWorker": "imgbb",
+    "UploadResult": "imgbb",
+    "ClickableLabel": "referencethumb",
+    "CloseButton": "referencethumb",
+    "ReferenceThumb": "referencethumb",
+    "ThumbOverlay": "referencethumb",
+}
+
+
+def __getattr__(name: str):
+    module = _LAZY.get(name)
+    if module is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    from importlib import import_module
+    value = getattr(import_module(f".{module}", __name__), name)
+    globals()[name] = value      # beim nächsten Zugriff ohne Umweg
+    return value
+
+
+def __dir__() -> list[str]:
+    return sorted(set(globals()) | set(_LAZY))
+
 
 __version__ = "0.4.0"
 
@@ -144,6 +175,8 @@ __all__ = [
     "GlowButton",
     "HaloButton",
     "HaloCheckBox",
+    "HaloCommandBar",
+    "HaloCommandGroup",
     "HaloDoubleSpinBox",
     "HaloDropdown",
     "HaloGroupBox",
@@ -156,6 +189,7 @@ __all__ = [
     "HaloSlider",
     "HaloSpinBox",
     "HaloTabWidget",
+    "HaloToolButton",
     "HeartCheckBox",
     "ImgBBApiError",
     "ImgBBClient",
@@ -186,4 +220,5 @@ __all__ = [
     "flash_taskbar",
     "mono_font",
     "stop_flashing",
+    "tinted_pixmap",
 ]

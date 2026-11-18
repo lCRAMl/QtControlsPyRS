@@ -13,6 +13,7 @@ Bedienelemente für PyQt6, die sich nach außen wie ihre Qt-Vorbilder verhalten.
 | `HaloLineEdit` | `QLineEdit` | Einzeilige Eingabe mit derselben Leiste; hell, solange die Maus darauf steht oder darin geschrieben wird |
 | `HaloSpinBox`, `HaloDoubleSpinBox` | `QSpinBox`, `QDoubleSpinBox` | Zahlenfelder mit zwei feinen Pfeilen rechts; der benutzte blitzt in der Signalfarbe auf |
 | `HaloGroupBox` | `QGroupBox` | Rahmen um eine Gruppe; die Überschrift sitzt in einer Lücke im oberen Strich |
+| `HaloCommandBar` | `QToolBar` | Befehlsleiste wie ein Menüband: Gruppen mit Überschrift, große und kleine Knöpfe an `QAction`s; wird das Fenster schmal, fallen erst die Beschriftungen |
 | `HaloTabWidget` | `QTabWidget` | Reiter mit gleitendem Strich; beim Wechsel schiebt sich der Inhalt seitlich hinaus und der nächste herein |
 | `HaloPromptBox` | `QPlainTextEdit` | Eingabefeld im Halo-Stil, das sich über Leisten mit Pfeil über den Inhalt darunter ausfährt |
 | `HaloChart` | — | Liniendiagramm: glühende Kurven über zurückhaltendem Gitter, Markierungslinien und Bänder für Soll- und Bereichswerte, unter der Maus ein Lineal mit den Werten aller Kurven |
@@ -26,7 +27,7 @@ Bedienelemente für PyQt6, die sich nach außen wie ihre Qt-Vorbilder verhalten.
 | `NumberField`, `IntField` | — | Zahl und Stückzahl mit Einheit daneben; das Zahlenfeld hält Platz für eine Meldung und färbt bei `set_error()` den Rahmen |
 | `ResultGrid` | — | Beschriftete Ergebniswerte in zwei Spalten im Halo-Rahmen; Zahlen in fester Laufweite untereinander |
 | `StaleBanner` | — | Band über einer Anzeige, die nicht mehr zu den aktuellen Eingaben gehört |
-| `StatusBar` | `QLabel` in einer Statuszeile | Klappt lange Meldungen kurz auf, ohne das Fenster zu verschieben |
+| `StatusBar` | `QLabel` in einer Statuszeile | Klappt lange Meldungen kurz auf, ohne das Fenster zu verschieben; Warnungen und Fehler farbig, mit Knopf für Einzelheiten |
 | `ReferenceThumb` | — | Bild-Miniatur als Karte, deren Rahmen dem Mauszeiger nachleuchtet; lädt die Datei zu ImgBB hoch und zeigt den Fortschritt |
 | `PromptEditor` | `QTextEdit` | Hebt Abschnittsüberschriften im Text hervor |
 | `flash_taskbar()` | — | Lässt den Taskleisten-Eintrag blinken (Windows) |
@@ -35,7 +36,9 @@ Die animierten Widgets holen ihre Farben aus der Palette und sehen deshalb im
 Hell- wie im Dunkelmodus richtig aus.
 
 Abhängigkeiten: PyQt6, dazu `requests` — das braucht nur der ImgBB-Upload von
-`ReferenceThumb`. Für `HaloSpectrum` kommen `numpy` und `soundcard` dazu, zu
+`ReferenceThumb`, und es wird erst geladen, wenn jemand `ReferenceThumb` oder
+den ImgBB-Client tatsächlich anfasst. Der Import der Sammlung bleibt dadurch
+bei rund 100 ms statt 280 ms. Für `HaloSpectrum` kommen `numpy` und `soundcard` dazu, zu
 haben über `pip install -e .[audio]`; ohne sie bleibt der Rest der Sammlung
 unberührt.
 
@@ -52,7 +55,7 @@ qt_controls_pyrs/
     dropdowns/    HaloDropdown
     spinboxes/    HaloSpinBox, HaloDoubleSpinBox
     tabs/         HaloTabWidget
-    formfields.py, halogroupbox.py, halolineedit.py, statusbar.py,
+    formfields.py, halocommandbar.py, halogroupbox.py, halolineedit.py, statusbar.py,
     referencethumb.py, halopromptbox.py, haloscrollbar.py, halospectrum.py,
     audiosource.py, imgbb.py, prompt_editor.py, flashtaskbar.py
 ```
@@ -284,6 +287,79 @@ in `FLASH_COLOR`, `FLASH_MS` und `FLASH_COUNT`. Außerdem: `HEIGHT`,
 
 Nicht unterstützt ist `setEditable(True)` — dafür bräuchte es ein Eingabefeld
 in der Leiste.
+
+## HaloCommandBar
+
+```python
+from qt_controls_pyrs import HaloCommandBar
+
+bar = HaloCommandBar()
+datei = bar.add_group("Datei")
+datei.add_action(neu_action)                    # groß: Symbol über der Schrift
+datei.add_action(oeffnen_action)
+datei.add_action(speichern_action, "small")     # klein: zu zweit übereinander
+datei.add_action(speichern_unter_action, "small")
+bar.add_stretch()                               # alles danach steht rechts
+bar.add_group("Hilfe").add_action(hilfe_action)
+layout.addWidget(bar)
+```
+
+Ein Menüband im Halo-Stil. Die Leiste besteht aus Gruppen mit einer blassen
+Überschrift darunter; zwischen zwei sichtbaren Gruppen steht ein feiner
+Trennstrich, unten läuft eine Grundlinie über die ganze Breite.
+
+### Alles hängt an der QAction
+
+Jeder Knopf (`HaloToolButton`) zeigt eine `QAction`: Text, Symbol, gesperrt,
+angehakt und ein angehängtes Menü kommen von dort und folgen ihr, wenn sie sich
+ändert. Die Anwendung schaltet also Aktionen, nie Knöpfe — dieselbe Aktion kann
+gleichzeitig im Kontextmenü stehen und über ihren Kurzbefehl auslösen. Der
+Tooltip nennt den Kurzbefehl („Save (Ctrl+S)“) und darunter den Statustext.
+Hat die Aktion ein Menü (`setMenu`), öffnet ein Klick es sofort, und neben der
+Schrift steht ein kleiner Pfeil.
+
+Die Knöpfe nehmen nie den Tastaturfokus. Kurzbefehle sollen dort wirken, wo
+gerade gearbeitet wird — in einem Zeichenfeld etwa —, nicht in der Leiste.
+
+Kleine Knöpfe füllen eine Spalte mit `SMALL_ROWS` (2) Plätzen, bevor die
+nächste beginnt; ein großer Knopf ist immer eine eigene Spalte.
+`add_widget(widget)` stellt ein beliebiges Widget als Spalte dazu, etwa einen
+Schalter oder ein Auswahlfeld. Eine Gruppe blendet man mit `setVisible(False)`
+aus; die Leiste rückt nach und nimmt den Trennstrich mit — so lassen sich je
+nach Arbeitsbereich andere Gruppen zeigen.
+
+### Wie sie aussieht
+
+In Ruhe ist ein Knopf flach: Symbol und Schrift, kein Rahmen. Unter der Maus
+glimmt er innen auf und bekommt einen feinen Rahmen, wie die Leiste des
+`HaloDropdown`. Ein angehakter Knopf (ein Werkzeugmodus) nimmt die
+Signalfarbe an und trägt unten denselben Strich wie der aktive Reiter des
+`HaloTabWidget` — bewusst zurückhaltend, denn ein Modus steht oft lange an.
+Gesperrte Knöpfe blassen ab.
+
+Symbole werden in der Schriftfarbe eingefärbt (`TINT_ICONS = True`): man
+zeichnet sie einfarbig schwarz, und sie passen zu Hell wie Dunkel, ohne zwei
+Sätze zu pflegen. Wer farbige Symbole zeigen will, setzt `TINT_ICONS = False`.
+Die eingefärbten Bilder werden zwischengespeichert; `tinted_pixmap()` steht
+auch für eigene Zwecke bereit.
+
+### Wenn der Platz knapp wird
+
+Die Leiste hält das Fenster nicht breit. Reicht die Breite nicht, gibt sie in
+zwei Stufen nach (`density()`): zuerst verlieren die kleinen Knöpfe ihre
+Schrift, dann auch die großen, und die Überschriften werden gekürzt. Was ohne
+Schrift dasteht, erklärt sein Tooltip. Die Höhe bleibt in jeder Stufe gleich,
+nichts darunter springt. Ein Knopf ohne Symbol behält seine Schrift immer.
+
+### Einstellen
+
+Am Knopf (`HaloToolButton`): `ICON_LARGE`, `ICON_SMALL`, `LARGE_H`, `SMALL_H`,
+`LARGE_MIN_W`, `PAD`, `GAP`, `RADIUS`, `INNER_GLOW`, `HOVER_ALPHA`, `HOVER_MS`,
+`ACCENT` bzw. `setAccentColor()`, `CHECKED_FILL`, `CHECKED_GLOW`,
+`CHECKED_SPREAD` und `TINT_ICONS`. An der Gruppe (`HaloCommandGroup`):
+`SMALL_ROWS`, `COLUMN_GAP`, `ROW_GAP`, `CAPTION_H`, `CAPTION_ALPHA`,
+`CAPTION_SCALE`. An der Leiste: `PAD_X`, `PAD_Y`, `GROUP_SPACING`,
+`SEPARATOR_ALPHA`, `BASE_ALPHA`.
 
 ## HaloTabWidget
 
@@ -910,6 +986,25 @@ Zeile klappt sie erneut auf. Der vollständige Text steht immer im Tooltip.
 gegen ein vorhandenes Label ist also unauffällig.
 
 Einstellbar: `LINE_HEIGHT`, `MAX_LINES`, `HOLD_MS`, `ANIM_MS`.
+
+### Warnungen, Fehler und Einzelheiten
+
+```python
+self.status.show_message("Muster 7 ist nicht zusammenhängend.", "warning")
+self.status.show_message("Export fehlgeschlagen.", "error", details=traceback_text)
+self.status.details_requested.connect(self.zeige_details)   # (meldung, einzelheiten)
+```
+
+`show_message()` kennt drei Stufen: `"info"` sieht aus wie `setText()`,
+`"warning"` und `"error"` färben die Schrift und setzen links einen schmalen
+Balken in derselben Farbe, damit man sie auch aus dem Augenwinkel bemerkt.
+Werden Einzelheiten mitgegeben, steht rechts ein Knopf „Details…“; ein Klick
+meldet `details_requested` mit Meldung und Einzelheiten — was dann erscheint,
+entscheidet die Anwendung. `setText()` ist dasselbe wie eine Info-Meldung und
+nimmt Farbe, Balken und Knopf wieder weg; die Schrift folgt danach wieder der
+Fensterpalette, auch nach einem späteren Wechsel von Hell auf Dunkel.
+
+Einstellbar: `WARNING_COLOR`, `ERROR_COLOR`, `MARK_W`, `DETAILS_TEXT`.
 
 ## ReferenceThumb
 

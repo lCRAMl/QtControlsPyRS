@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+- Neu: `HaloCommandBar`, eine Befehlsleiste wie ein Menüband. Gruppen mit
+  Überschrift, große Knöpfe (Symbol über der Schrift) und kleine, die sich zu
+  zweit stapeln; jeder Knopf (`HaloToolButton`) folgt einer `QAction` samt
+  Kurzbefehl im Tooltip, Häkchen und Menü. Einfarbige Symbole nehmen die
+  Schriftfarbe an. Wird das Fenster schmal, fallen in zwei Stufen die
+  Beschriftungen weg, statt das Fenster breit zu halten; die Höhe bleibt.
+  Die Knöpfe nehmen keinen Tastaturfokus. Gebraucht für das LayerPattern-Tool.
+- `StatusBar.show_message(text, level, details)`: Warnungen und Fehler färben
+  die Schrift und setzen links einen Balken; mit Einzelheiten erscheint ein
+  Knopf „Details…“, der `details_requested` meldet. `setText()` bleibt wie
+  bisher und setzt die Stufe zurück.
+- Der Paketimport lädt `requests` nicht mehr: `ReferenceThumb` und der
+  ImgBB-Client kommen erst beim ersten Zugriff (PEP 562). Der Import der
+  Sammlung sinkt von rund 280 auf 100 ms. Für den Aufrufer ändert sich nichts.
+
 - `ReferenceThumb`: neues Signal `image_selected(index, pfad)`, sobald ein Bild
   geladen ist. Damit kann das Programm den Startordner des Dialogs nachführen,
   etwa für alle Miniaturen gemeinsam auf den Ordner des zuletzt gewählten Bildes.
