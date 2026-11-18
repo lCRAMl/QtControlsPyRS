@@ -79,10 +79,18 @@ direkt zu: `from qt_controls_pyrs.buttons import GlowButton`.
 
 ## Installation
 
-Aus dem lokalen Ordner, damit Änderungen sofort in allen Projekten wirken:
+Direkt von GitHub (das Paket liegt nicht auf PyPI):
 
 ```
-pip install -e Z:\Code\python\QtControlsPyRS
+pip install "qt-controls-pyrs @ git+https://github.com/lCRAMl/QtControlsPyRS.git"
+```
+
+Wer an der Sammlung selbst arbeitet, klont sie und installiert sie editierbar.
+Änderungen wirken dann sofort in allen Projekten, die sie benutzen:
+
+```
+git clone https://github.com/lCRAMl/QtControlsPyRS.git
+pip install -e QtControlsPyRS
 ```
 
 PyInstaller findet das Paket danach von allein — es enthält keine Bilddateien,
@@ -1174,3 +1182,16 @@ pytest
 ```
 
 Die Tests laufen ohne sichtbare Fenster (`QT_QPA_PLATFORM=offscreen`).
+
+## Lizenz
+
+Copyright (C) 2026 lCRAMl
+
+qt-controls-pyrs ist freie Software: Sie darf unter den Bedingungen der GNU General
+Public License, Version 3, wie von der Free Software Foundation veröffentlicht,
+weitergegeben und verändert werden. Sie wird in der Hoffnung verbreitet, dass sie
+nützlich ist, aber OHNE JEDE GEWÄHRLEISTUNG, auch ohne die stillschweigende Gewähr
+der MARKTREIFE oder der EIGNUNG FÜR EINEN BESTIMMTEN ZWECK. Den vollständigen Text
+enthält [LICENSE](LICENSE).
+
+PyQt6, auf dem die Sammlung aufbaut, steht ebenfalls unter der GPL v3.

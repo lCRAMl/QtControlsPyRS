@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=64"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,6 +7,8 @@ name = "qt-controls-pyrs"
 dynamic = ["version"]
 description = "Bedienelemente für PyQt6: Glow-Button, Schiebeschalter, aufklappende Statuszeile, Bild-Miniatur mit Upload"
 readme = "README.md"
+license = "GPL-3.0-only"
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
 authors = [{ name = "lCRAMl" }]
 # requests nur fuer den ImgBB-Upload von ReferenceThumb

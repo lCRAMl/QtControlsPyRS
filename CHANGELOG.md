@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Lizenz: GNU GPL v3 (`LICENSE`, in `pyproject.toml` als `GPL-3.0-only`;
+  dafür braucht der Bau jetzt setuptools 77 oder neuer). Die README installiert
+  von GitHub statt aus einem lokalen Ordner.
+
 - Neu: `HaloDialog` und `HaloMessageBox` - Dialog und Rückfrage ohne
   Windows-Rahmen. Eigene Titelleiste zum Verschieben mit X, feiner Rahmen mit
   Schein, Escape bricht ab, Enter löst den Standardknopf aus. Die Rückfrage
